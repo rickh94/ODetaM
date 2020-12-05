@@ -8,3 +8,4 @@ before_install:
 install:
   - poetry install
 script: poetry run pytest --cov=odetam
+after_success: bash <(curl -s https://codecov.io/bash)
