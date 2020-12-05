@@ -47,13 +47,8 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
         :param key: Deta database key
         :return: object found in database serialized into its pydantic object
 
-        :raises NotImplemented: Very bad error, probably in this code
         :raises ItemNotFound: No matching item was found
         """
-        if cls.__db__ is None:
-            raise NotImplemented(
-                "Db has not been set. Something went wrong in the inheritance."
-            )
         item = cls.__db__.get(key)
         if item is None:
             raise ItemNotFound("Could not find item matching that key")
