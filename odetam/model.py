@@ -98,7 +98,8 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
                 processed.extend(result["processed"]["items"])
                 records = []
         if records:
-            cls.__db__.put_many(records)
+            result = cls.__db__.put_many(records)
+            processed.extend(result["processed"]["items"])
         return [cls.parse_obj(rec) for rec in processed]
 
     def save(self):
