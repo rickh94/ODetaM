@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "ODetaM"
+version = "0.1.0"
+description = ""
+authors = ["Rick Henry <rickhenry@rickhenry.dev>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+pydantic = "^1.7"
+deta = "^0.7.0"
+ujson = "^4.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

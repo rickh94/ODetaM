@@ -1,0 +1,158 @@
+[[package]]
+category = "dev"
+description = "Atomic file writes."
+name = "atomicwrites"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "1.4.0"
+
+[[package]]
+category = "dev"
+description = "Classes Without Boilerplate"
+name = "attrs"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "20.3.0"
+
+[[package]]
+category = "dev"
+description = "Cross-platform colored terminal text."
+marker = "sys_platform == \"win32\""
+name = "colorama"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "0.4.4"
+
+[[package]]
+category = "main"
+description = "A backport of the dataclasses module for Python 3.6"
+marker = "python_version < \"3.7\""
+name = "dataclasses"
+optional = false
+python-versions = "*"
+version = "0.6"
+
+[[package]]
+category = "main"
+description = "Deta lib for Python 3"
+name = "deta"
+optional = false
+python-versions = "*"
+version = "0.7"
+
+[[package]]
+category = "dev"
+description = "Read metadata from Python packages"
+marker = "python_version < \"3.8\""
+name = "importlib-metadata"
+optional = false
+python-versions = ">=3.6"
+version = "3.1.1"
+
+[package.dependencies]
+zipp = ">=0.5"
+
+[[package]]
+category = "dev"
+description = "More routines for operating on iterables, beyond itertools"
+name = "more-itertools"
+optional = false
+python-versions = ">=3.5"
+version = "8.6.0"
+
+[[package]]
+category = "dev"
+description = "plugin and hook calling mechanisms for python"
+name = "pluggy"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.13.1"
+
+[package.dependencies]
+[package.dependencies.importlib-metadata]
+python = "<3.8"
+version = ">=0.12"
+
+[[package]]
+category = "dev"
+description = "library with cross-python path, ini-parsing, io, code, log facilities"
+name = "py"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "1.9.0"
+
+[[package]]
+category = "main"
+description = "Data validation and settings management using python 3.6 type hinting"
+name = "pydantic"
+optional = false
+python-versions = ">=3.6"
+version = "1.7.3"
+
+[package.dependencies]
+[package.dependencies.dataclasses]
+python = "<3.7"
+version = ">=0.6"
+
+[[package]]
+category = "dev"
+description = "pytest: simple powerful testing with Python"
+name = "pytest"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "3.10.1"
+
+[package.dependencies]
+atomicwrites = ">=1.0"
+attrs = ">=17.4.0"
+colorama = "*"
+more-itertools = ">=4.0.0"
+pluggy = ">=0.7"
+py = ">=1.5.0"
+setuptools = "*"
+six = ">=1.10.0"
+
+[[package]]
+category = "dev"
+description = "Python 2 and 3 compatibility utilities"
+name = "six"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+version = "1.15.0"
+
+[[package]]
+category = "main"
+description = "Ultra fast JSON encoder and decoder for Python"
+name = "ujson"
+optional = false
+python-versions = ">=3.6"
+version = "4.0.1"
+
+[[package]]
+category = "dev"
+description = "Backport of pathlib-compatible object wrapper for zip files"
+marker = "python_version < \"3.8\""
+name = "zipp"
+optional = false
+python-versions = ">=3.6"
+version = "3.4.0"
+
+[metadata]
+content-hash = "1dc20185dcbf7da93303d4cfe410b88f7d11b2d85f472befe265971f767c5813"
+python-versions = "^3.6"
+
+[metadata.hashes]
+atomicwrites = ["6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197", "ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"]
+attrs = ["31b2eced602aa8423c2aea9c76a724617ed67cf9513173fd3a4f03e3a929c7e6", "832aa3cde19744e49938b91fea06d69ecb9e649c93ba974535d08ad92164f700"]
+colorama = ["5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b", "9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"]
+dataclasses = ["454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f", "6988bd2b895eef432d562370bb707d540f32f7360ab13da45340101bc2307d84"]
+deta = ["1e802aa3808bad9e38c8b9e38e8a91979869a5a1e80d109d2db95adb25d412dd", "1f5d694f470c019b99525fa7a88706b6c24c65c969cc1ba535bd8d6d80ccdca9"]
+importlib-metadata = ["6112e21359ef8f344e7178aa5b72dc6e62b38b0d008e6d3cb212c5b84df72013", "b0c2d3b226157ae4517d9625decf63591461c66b3a808c2666d538946519d170"]
+more-itertools = ["8e1a2a43b2f2727425f2b5839587ae37093f19153dc26c0927d1048ff6557330", "b3a9005928e5bed54076e6e549c792b306fddfe72b2d1d22dd63d42d5d3899cf"]
+pluggy = ["15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0", "966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"]
+py = ["366389d1db726cd2fcfc79732e75410e5fe4d31db13692115529d34069a043c2", "9ca6883ce56b4e8da7e79ac18787889fa5206c79dcc67fb065376cd2fe03f342"]
+pydantic = ["025bf13ce27990acc059d0c5be46f416fc9b293f45363b3d19855165fee1874f", "185e18134bec5ef43351149fe34fda4758e53d05bb8ea4d5928f0720997b79ef", "213125b7e9e64713d16d988d10997dabc6a1f73f3991e1ff8e35ebb1409c7dc9", "24ca47365be2a5a3cc3f4a26dcc755bcdc9f0036f55dcedbd55663662ba145ec", "38be427ea01a78206bcaf9a56f835784afcba9e5b88fbdce33bbbfbcd7841229", "475f2fa134cf272d6631072554f845d0630907fce053926ff634cc6bc45bf1af", "514b473d264671a5c672dfb28bdfe1bf1afd390f6b206aa2ec9fed7fc592c48e", "59e45f3b694b05a69032a0d603c32d453a23f0de80844fb14d55ab0c6c78ff2f", "5b24e8a572e4b4c18f614004dda8c9f2c07328cb5b6e314d6e1bbd536cb1a6c1", "6e3874aa7e8babd37b40c4504e3a94cc2023696ced5a0500949f3347664ff8e2", "8d72e814c7821125b16f1553124d12faba88e85405b0864328899aceaad7282b", "a4143c8d0c456a093387b96e0f5ee941a950992904d88bc816b4f0e72c9a0009", "b2b054d095b6431cdda2f852a6d2f0fdec77686b305c57961b4c5dd6d863bf3c", "c59ea046aea25be14dc22d69c97bee629e6d48d2b2ecb724d7fe8806bf5f61cd", "d1fe3f0df8ac0f3a9792666c69a7cd70530f329036426d06b4f899c025aca74e", "d8df4b9090b595511906fa48deda47af04e7d092318bfb291f4d45dfb6bb2127", "dba5c1f0a3aeea5083e75db9660935da90216f8a81b6d68e67f54e135ed5eb23", "e682f6442ebe4e50cb5e1cfde7dda6766fb586631c3e5569f6aa1951fd1a76ef", "ecb54491f98544c12c66ff3d15e701612fc388161fd455242447083350904730", "f5b06f5099e163295b8ff5b1b71132ecf5866cc6e7f586d78d7d3fd6e8084608", "f6864844b039805add62ebe8a8c676286340ba0c6d043ae5dea24114b82a319e", "ffd180ebd5dd2a9ac0da4e8b995c9c99e7c74c31f985ba090ee01d681b1c4b95"]
+pytest = ["3f193df1cfe1d1609d4c583838bea3d532b18d6160fd3f55c9447fdca30848ec", "e246cf173c01169b9617fc07264b7b1316e78d7a650055235d6d897bc80d9660"]
+six = ["30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259", "8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"]
+ujson = ["078808c385036cba73cad96f498310c61e9b5ae5ac9ea01e7c3996ece544b556", "0a2e1b211714eb1ec0772a013ec9967f8f95f21c84e8f46382e9f8a32ae781fe", "0f412c3f59b1ab0f40018235224ca0cf29232d0201ff5085618565a8a9c810ed", "26cf6241b36ff5ce4539ae687b6b02673109c5e3efc96148806a7873eaa229d3", "2b2d9264ac76aeb11f590f7a1ccff0689ba1313adacbb6d38d3b15f21a392897", "4f12b0b4e235b35d49f15227b0a827e614c52dda903c58a8f5523936c233dfc7", "4fe8c6112b732cba5a722f7cbe22f18d405f6f44415794a5b46473a477635233", "51480048373cf97a6b97fcd70c3586ca0a31f27e22ab680fb14c1f22bedbf743", "568bb3e7f035006147af4ce3a9ced7d126c92e1a8607c7b2266007b1c1162c53", "5fe1536465b1c86e32a47113abd3178001b7c2dcd61f95f336fe2febf4661e74", "71703a269f074ff65b9d7746662e4b3e76a4af443e532218af1e8ce15d9b1e7b", "7a1545ac2476db4cc1f0f236603ccbb50991fc1bba480cda1bc06348cc2a2bf0", "a5200a68f1dcf3ce275e1cefbcfa3914b70c2b5e2f71c2e31556aa1f7244c845", "a618af22407baeadb3f046f81e7a5ee5e9f8b0b716d2b564f92276a54d26a823", "a79bca47eafb31c74b38e68623bc9b2bb930cb48fab1af31c8f2cb68cf473421", "b87379a3f8046d6d111762d81f3384bf38ab24b1535c841fe867a4a097d84523", "bd4c77aee3ffb920e2dbc21a9e0c7945a400557ce671cfd57dbd569f5ebc619d", "c354c1617b0a4378b6279d0cd511b769500cf3fa7c42e8e004cbbbb6b4c2a875", "c604024bd853b5df6be7d933e934da8dd139e6159564db7c55b92a9937678093", "e7ab24942b2d57920d75b817b8eead293026db003247e26f99506bdad86c61b4", "f8a60928737a9a47e692fcd661ef2b5d75ba22c7c930025bd95e338f2a6e15bc"]
+zipp = ["102c24ef8f171fd729d46599845e95c7ab894a4cf45f5de11a44cc7444fb1108", "ed5eee1974372595f9e416cc7bbeeb12335201d8081ca8a0743c954d4446e5cb"]
