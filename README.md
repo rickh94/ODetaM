@@ -14,13 +14,16 @@ FastAPI, but the Deta API is not asynchronous, so any framework could potentiall
 be used.
 
 Bases will be automatically created based on model names (changed from Pascal/Camel 
-case to snake case). A 'key' field will be automatically added to any model. You can
-supply the key on creation, or Deta will generate one automatically and it will be
-added to the object when it is saved.
+case to snake case). A `key` field (Deta's unique id) will be automatically added to 
+any model. You can supply the key on creation, or Deta will generate one automatically 
+and it will be added to the object when it is saved.
 
 ## Example
 
-```
+```python
+import datetime
+from typing import List
+
 from odetam import DetaModel
 
 class Captain(DetaModel):
@@ -31,13 +34,13 @@ class Captain(DetaModel):
 # create
 kirk = Captain(
     name="James T. Kirk", 
-    joined=datetime.date(2252, 01, 01), 
+    joined=datetime.date(2252, 1, 1), 
     ships=["Enterprise"],
 )
 
 sisko = Captain(
     name="Benjamin Sisko",
-    joined=datetime.date(2350, 01, 01),
+    joined=datetime.date(2350, 1, 1),
     ships=["Deep Space 9", "Defiant"],
 )
 
