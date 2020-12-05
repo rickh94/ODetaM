@@ -42,6 +42,14 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
 
     @classmethod
     def get(cls, key):
+        """
+        Get a single instance
+        :param key: Deta database key
+        :return: object found in database serialized into its pydantic object
+
+        :raises NotImplemented: Very bad error, probably in this code
+        :raises ItemNotFound: No matching item was found
+        """
         if cls.__db__ is None:
             raise NotImplemented(
                 "Db has not been set. Something went wrong in the inheritance."
@@ -53,6 +61,7 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
 
     @classmethod
     def get_all(cls):
+        """Get all the records from the database"""
         records = next(cls.__db__.fetch())
         return [cls.parse_obj(record) for record in records]
 
@@ -60,15 +69,22 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
     def query(
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
+        """Get items from database based on the query."""
         found = next(cls.__db__.fetch(query_statement.as_query()))
         return [cls.parse_obj(item) for item in found]
 
     @classmethod
     def delete_key(cls, key):
+        """Delete an item based on the key"""
         cls.__db__.delete(key)
 
     @classmethod
     def put_many(cls, items):
+        """Put multiple instances at once
+
+        :param items: List of pydantic objects to put in the database
+        :returns: List of items successfully added, serialized with pydantic
+        """
         records = []
         processed = []
         for item in items:
@@ -86,6 +102,8 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
         return [cls.parse_obj(rec) for rec in processed]
 
     def save(self):
+        """Saves the record to the database. Behaves as upsert, will create
+        if not present. Database key will then be set on the object."""
         exclude = set()
         if self.key is None:
             exclude.add("key")
@@ -95,6 +113,9 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
         self.key = saved["key"]
 
     def delete(self):
+        """Delete the open object from the database. The object will still exist in
+        python, but will be deleted from the database and the key attribute will be
+        set to None."""
         if not self.key:
             raise DetaError("Item does not have key for deletion")
         self.__db__.delete(self.key)

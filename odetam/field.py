@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import ujson
 from pydantic import BaseModel
@@ -39,10 +39,14 @@ class DetaField:
             raise InvalidDetaQuery("Prefix is only valid for string types")
         return self.query_expression("pfx", other)
 
-    def range(self, range_lst: List[int]):
-        if not isinstance(range_lst, list) or len(range_lst) != 2:
-            raise InvalidDetaQuery("Range List must be two integers")
-        return DetaQuery(condition=f"{self.field.name}?r", value=range_lst)
+    def range(self, lower, upper):
+        if not isinstance(lower, (int, float)):
+            raise InvalidDetaQuery("Lower must be a number")
+        if not isinstance(upper, (int, float)):
+            raise InvalidDetaQuery("Upper must be a number")
+        if upper <= lower:
+            raise InvalidDetaQuery("Lower must be less than upper")
+        return DetaQuery(condition=f"{self.field.name}?r", value=[lower, upper])
 
     def contains(self, other: str):
         if not isinstance(other, str) or self.field.type_ not in [str, List[str]]:
