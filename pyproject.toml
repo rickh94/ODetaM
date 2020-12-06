@@ -1,8 +1,9 @@
 [tool.poetry]
 name = "ODetaM"
-version = "1.0.0"
-description = ""
+version = "1.0.1"
+description = "A simple ODM (Object Document Mapper) for Deta Base, based on pydantic."
 authors = ["Rick Henry <rickhenry@rickhenry.dev>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"
