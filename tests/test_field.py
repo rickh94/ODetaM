@@ -2,6 +2,7 @@ from typing import List
 from unittest import mock
 
 import pytest
+from pydantic import BaseModel
 
 from odetam.exceptions import InvalidDetaQuery
 from odetam.field import DetaField
@@ -58,6 +59,19 @@ def test_query_expression(str_field):
     assert isinstance(qe, DetaQuery)
     assert qe.condition == "str_field?eq"
     assert qe.value == "hi"
+
+def test_query_expression_nested_field():
+    class Data(BaseModel):
+        name: str
+    inner_field = mock.MagicMock()
+    inner_field.name = 'data'
+    inner_field.type_ = Data
+    field = DetaField(field=inner_field)
+    qe = field._query_expression("eq", Data(name='hi'))
+
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == 'data?eq'
+    assert qe.value == {'name': 'hi'}
 
 
 def test_eq(str_field):
