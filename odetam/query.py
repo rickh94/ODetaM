@@ -1,5 +1,10 @@
 from typing import List
 
+from odetam.exceptions import InvalidDetaQuery
+
+
+# TODO: Add better type checking to avoid errors
+
 
 class DetaQuery:
     def __init__(self, condition, value):
@@ -39,17 +44,20 @@ class DetaQueryStatement:
     def __init__(self, conditions: List[DetaQuery]):
         self.conditions = conditions
 
-    def as_query(self):
-        return {query.condition: query.value for query in self.conditions}
-
     def __and__(self, other):
         if isinstance(other, DetaQuery):
             self.conditions.append(other)
         if isinstance(other, DetaQueryStatement):
             self.conditions.extend(other.conditions)
+        if isinstance(other, DetaQueryList):
+            raise InvalidDetaQuery("Incorrect and/or nesting")
         return self
 
     def __or__(self, other):
-        if isinstance(other, list):
-            return other.append(self)
+        if isinstance(other, DetaQueryList):
+            other.conditions.append(self)
+            return other
         return DetaQueryList(conditions=[self, other])
+
+    def as_query(self):
+        return {query.condition: query.value for query in self.conditions}
