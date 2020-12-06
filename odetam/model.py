@@ -17,14 +17,6 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
         cls = super().__new__(mcs, name, bases, dct)
         cls.__db_name__ = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
         cls._db = None
-        # try:
-        #     deta = Deta(os.getenv("PROJECT_KEY"))
-        # except AttributeError:
-        #     raise NoProjectKey(
-        #         "Ensure that the 'PROJECT_KEY' environment variable is set to your "
-        #         "project key"
-        #     )
-        # cls.__db__ = deta.Base(cls.__db_name__)
 
         for name, field in cls.__fields__.items():
             setattr(cls, name, DetaField(field=field))
@@ -43,7 +35,6 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
             )
         cls._db = deta.Base(cls.__db_name__)
         return cls._db
-
 
 
 class DetaModel(BaseModel, metaclass=DetaModelMetaClass):

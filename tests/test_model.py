@@ -104,7 +104,7 @@ def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
     class ObjectExample(DetaModel):
         name: str
 
-    ObjectExample(name='hi').save()
+    ObjectExample(name="hi").save()
 
     deta_mock.assert_called_with("123_123")
     instance_mock.Base.assert_called_with("object_example")
@@ -115,8 +115,10 @@ def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
 def test_deta_meta_model_raises_error_with_no_project_key():
     os.environ["PROJECT_KEY"] = ""
     with pytest.raises(NoProjectKey):
+
         class ObjectExample(DetaModel):
             pass
+
         ObjectExample().save()
 
     os.environ["PROJECT_KEY"] = "123_123"

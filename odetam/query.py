@@ -12,10 +12,9 @@ class DetaQuery:
         return DetaQueryStatement([self, other])
 
     def __or__(self, other):
-        if isinstance(other, list):
-            other.append(self)
-            return other
-        return [self, other]
+        if isinstance(other, DetaQueryList):
+            return other | self
+        return DetaQueryList(conditions=[self, other])
 
     def as_query(self):
         return {self.condition: self.value}
