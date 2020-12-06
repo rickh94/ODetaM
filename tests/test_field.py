@@ -60,18 +60,20 @@ def test_query_expression(str_field):
     assert qe.condition == "str_field?eq"
     assert qe.value == "hi"
 
+
 def test_query_expression_nested_field():
     class Data(BaseModel):
         name: str
+
     inner_field = mock.MagicMock()
-    inner_field.name = 'data'
+    inner_field.name = "data"
     inner_field.type_ = Data
     field = DetaField(field=inner_field)
-    qe = field._query_expression("eq", Data(name='hi'))
+    qe = field._query_expression("eq", Data(name="hi"))
 
     assert isinstance(qe, DetaQuery)
-    assert qe.condition == 'data?eq'
-    assert qe.value == {'name': 'hi'}
+    assert qe.condition == "data?eq"
+    assert qe.value == {"name": "hi"}
 
 
 def test_eq(str_field):
@@ -218,6 +220,7 @@ def test_not_contains_wrong_type(int_field):
 def test_not_contains_wrong_list_type(int_list_field):
     with pytest.raises(InvalidDetaQuery):
         int_list_field.not_contains("test")
+
 
 def test_not_contains_arg_wrong_type(str_field):
     with pytest.raises(InvalidDetaQuery):

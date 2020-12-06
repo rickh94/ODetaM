@@ -93,7 +93,7 @@ def test_version():
     assert __version__ == "0.1.0"
 
 
-def test_deta_meta_model_class_creates_db(monkeypatch):
+def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
     deta_mock = mock.MagicMock()
     instance_mock = mock.MagicMock()
     deta_mock.return_value = instance_mock
@@ -104,6 +104,8 @@ def test_deta_meta_model_class_creates_db(monkeypatch):
     class ObjectExample(DetaModel):
         name: str
 
+    ObjectExample(name='hi').save()
+
     deta_mock.assert_called_with("123_123")
     instance_mock.Base.assert_called_with("object_example")
     assert ObjectExample.__db_name__ == "object_example"
@@ -113,9 +115,9 @@ def test_deta_meta_model_class_creates_db(monkeypatch):
 def test_deta_meta_model_raises_error_with_no_project_key():
     os.environ["PROJECT_KEY"] = ""
     with pytest.raises(NoProjectKey):
-
         class ObjectExample(DetaModel):
             pass
+        ObjectExample().save()
 
     os.environ["PROJECT_KEY"] = "123_123"
 
@@ -131,7 +133,7 @@ def test_deta_meta_model_assigns_fields():
 
 def test_get(Captain):
     db_mock = mock.MagicMock()
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     db_mock.get.return_value = {
         "name": "Jean-Luc Picard",
         "joined": "2323-01-01",
@@ -150,7 +152,7 @@ def test_get(Captain):
 
 def test_get_not_found_raises_error(Captain):
     db_mock = mock.MagicMock()
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     db_mock.get.return_value = None
     with pytest.raises(ItemNotFound):
         Captain.get("key1")
@@ -158,7 +160,7 @@ def test_get_not_found_raises_error(Captain):
 
 def test_get_all(Captain, captains_with_keys_list):
     db_mock = mock.MagicMock()
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
 
     def _mock_fetch():
         yield captains_with_keys_list
@@ -179,9 +181,12 @@ def test_query(Captain, captains_with_keys_list):
 
         yield [captains_with_keys_list[1]]
 
-    Captain.__db__.fetch = _mock_fetch
+    db_mock = mock.MagicMock()
+    db_mock.fetch = _mock_fetch
+    Captain._db = db_mock
     mock_query_statement = mock.MagicMock()
     mock_query_statement.as_query.return_value = {"example": "query"}
+
     results = Captain.query(mock_query_statement)
 
     assert len(results) == 1
@@ -189,16 +194,16 @@ def test_query(Captain, captains_with_keys_list):
 
 
 def test_delete_key(Captain):
-    Captain.__db__ = mock.MagicMock()
+    Captain._db = mock.MagicMock()
 
     Captain.delete_key("testkey")
-    Captain.__db__.delete.assert_called_with("testkey")
+    Captain._db.delete.assert_called_with("testkey")
 
 
 def test_put_many(Captain, captains_list, captains_with_keys_list, captains):
     db_mock = mock.MagicMock()
     db_mock.put_many.return_value = {"processed": {"items": captains_with_keys_list}}
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     results = Captain.put_many(captains)
 
     db_mock.put_many.assert_called_with(captains_list)
@@ -231,7 +236,7 @@ def test_put_more_than_25(Captain, random_captain_data):
         {"processed": {"items": captain_data_with_keys[25:50]}},
         {"processed": {"items": captain_data_with_keys[50:]}},
     ]
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     results = Captain.put_many(captains)
 
     # Two batches of 25, and the remaining records
@@ -249,7 +254,7 @@ def test_put_more_than_25(Captain, random_captain_data):
 
 def test_save_new(Captain):
     db_mock = mock.MagicMock()
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     data = {"name": "Saru", "joined": "2249-01-01", "ships": ["Discovery"]}
     db_mock.put.return_value = {**data, "key": "key8"}
     saru = Captain.parse_obj(data)
@@ -268,24 +273,25 @@ def test_save_existing(Captain):
     }
     db_mock = mock.MagicMock()
     db_mock.put.return_value = data
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     janeway = Captain.parse_obj(data)
     janeway.save()
     db_mock.put.assert_called_with(data)
     assert janeway.key == "key25"
 
 
-def test_delete(captains, Captain):
+def test_delete(captains_list, Captain):
     db_mock = mock.MagicMock()
-    captains[0].key = "key22"
-    Captain.__db__ = db_mock
-    captains[0].delete()
+    Captain._db = db_mock
+    captain = Captain.parse_obj(captains_list[0])
+    captain.key = "key22"
+    captain.delete()
     db_mock.delete.assert_called_with("key22")
-    assert captains[0].key is None
+    assert captain.key is None
 
 
-def test_delete_no_key(Captain, captains):
+def test_delete_no_key(Captain, captains, monkeypatch):
     db_mock = mock.MagicMock()
-    Captain.__db__ = db_mock
+    Captain._db = db_mock
     with pytest.raises(DetaError):
         captains[1].delete()

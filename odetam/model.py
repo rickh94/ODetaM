@@ -16,6 +16,24 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
     def __new__(mcs, name, bases, dct):
         cls = super().__new__(mcs, name, bases, dct)
         cls.__db_name__ = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+        cls._db = None
+        # try:
+        #     deta = Deta(os.getenv("PROJECT_KEY"))
+        # except AttributeError:
+        #     raise NoProjectKey(
+        #         "Ensure that the 'PROJECT_KEY' environment variable is set to your "
+        #         "project key"
+        #     )
+        # cls.__db__ = deta.Base(cls.__db_name__)
+
+        for name, field in cls.__fields__.items():
+            setattr(cls, name, DetaField(field=field))
+        return cls
+
+    @property
+    def __db__(cls):
+        if cls._db:
+            return cls._db
         try:
             deta = Deta(os.getenv("PROJECT_KEY"))
         except AttributeError:
@@ -23,11 +41,9 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
                 "Ensure that the 'PROJECT_KEY' environment variable is set to your "
                 "project key"
             )
-        cls.__db__ = deta.Base(cls.__db_name__)
+        cls._db = deta.Base(cls.__db_name__)
+        return cls._db
 
-        for name, field in cls.__fields__.items():
-            setattr(cls, name, DetaField(field=field))
-        return cls
 
 
 class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
@@ -97,6 +113,10 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
             processed.extend(result["processed"]["items"])
         return [cls.parse_obj(rec) for rec in processed]
 
+    @classmethod
+    def _db_put(cls, data):
+        return cls.__db__.put(data)
+
     def save(self):
         """Saves the record to the database. Behaves as upsert, will create
         if not present. Database key will then be set on the object."""
@@ -105,7 +125,7 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
             exclude.add("key")
         # this is dumb, but it ensures everything is in a json-serializable form
         data = ujson.loads(self.json(exclude=exclude))
-        saved = self.__db__.put(data)
+        saved = self._db_put(data)
         self.key = saved["key"]
 
     def delete(self):
@@ -114,5 +134,5 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
         set to None."""
         if not self.key:
             raise DetaError("Item does not have key for deletion")
-        self.__db__.delete(self.key)
+        self.delete_key(self.key)
         self.key = None
