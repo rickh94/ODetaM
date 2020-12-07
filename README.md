@@ -6,6 +6,10 @@
 A simple ODM (Object Document Mapper) for [Deta Base](https://deta.sh) base on
 [pydantic](https://github.com/samuelcolvin/pydantic/).
 
+## Installation
+
+`pip install odetam`
+
 ## Usage
 
 Create pydantic models as normal, but inherit from `DetaModel` instead of pydantic
