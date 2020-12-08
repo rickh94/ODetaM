@@ -89,10 +89,6 @@ def random_captain_data():
     return _gen_captain_data
 
 
-def test_version():
-    assert __version__ == "0.1.0"
-
-
 def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
     deta_mock = mock.MagicMock()
     instance_mock = mock.MagicMock()
