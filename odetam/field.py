@@ -17,7 +17,7 @@ class DetaField:
         return DetaQuery(condition=f"{self.field.name}?{operator}", value=data)
 
     def __eq__(self, other):
-        return self._query_expression("eq", other)
+        return DetaQuery(condition=self.field.name, value=other)
 
     def __ne__(self, other):
         return self._query_expression("ne", other)

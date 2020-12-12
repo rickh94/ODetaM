@@ -69,17 +69,17 @@ def test_query_expression_nested_field():
     inner_field.name = "data"
     inner_field.type_ = Data
     field = DetaField(field=inner_field)
-    qe = field._query_expression("eq", Data(name="hi"))
+    qe = field._query_expression("ne", Data(name="hi"))
 
     assert isinstance(qe, DetaQuery)
-    assert qe.condition == "data?eq"
+    assert qe.condition == "data?ne"
     assert qe.value == {"name": "hi"}
 
 
 def test_eq(str_field):
-    qe = str_field == "test"
+    qe = (str_field == "test")
     assert isinstance(qe, DetaQuery)
-    assert qe.condition == "str_field?eq"
+    assert qe.condition == "str_field"
     assert qe.value == "test"
 
 
