@@ -28,7 +28,7 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
             return cls._db
         try:
             deta = Deta(os.getenv("PROJECT_KEY"))
-        except AttributeError:
+        except (AttributeError, AssertionError):
             raise NoProjectKey(
                 "Ensure that the 'PROJECT_KEY' environment variable is set to your "
                 "project key"
