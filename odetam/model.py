@@ -64,7 +64,7 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
     @classmethod
     def get_all(cls):
         """Get all the records from the database"""
-        records = next(cls.__db__.fetch())
+        records = cls.__db__.fetch().items
         return [cls.parse_obj(record) for record in records]
 
     @classmethod
@@ -72,7 +72,7 @@ class DetaModel(BaseModel, metaclass=DetaModelMetaClass):
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
         """Get items from database based on the query."""
-        found = next(cls.__db__.fetch(query_statement.as_query()))
+        found = cls.__db__.fetch(query_statement.as_query()).items
         return [cls.parse_obj(item) for item in found]
 
     @classmethod

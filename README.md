@@ -23,6 +23,13 @@ PascalCase/CamelCase case to snake_case). A `key` field (Deta's unique id) will 
 automatically added to any model. You can supply the key on creation, or Deta will
 generate one automatically and it will be added to the object when it is saved.
 
+### Get All
+
+DetaModel.get_all() may be broken for large bases. The main deta python library has
+implemented some breaking changes (though definite improvements) around the fetching
+of records from the Base. They have implemented a new automatic pagination system 
+that I have not had time to play with yet. Queries are recommended!
+
 ## Example
 
 ```python

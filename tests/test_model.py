@@ -4,6 +4,7 @@ import random
 from typing import List
 from unittest import mock
 
+import deta
 import pytest
 from faker import Faker
 
@@ -161,7 +162,7 @@ def test_get_all(Captain, captains_with_keys_list):
     Captain._db = db_mock
 
     def _mock_fetch():
-        yield captains_with_keys_list
+        return deta.base.FetchResponse(count=len(captains_with_keys_list), last=None, items=captains_with_keys_list)
 
     db_mock.fetch = _mock_fetch
 
@@ -176,8 +177,8 @@ def test_get_all(Captain, captains_with_keys_list):
 def test_query(Captain, captains_with_keys_list):
     def _mock_fetch(query_statement):
         assert query_statement["example"] == "query"
+        return deta.base.FetchResponse(count=1, last=None, items=captains_with_keys_list[1:2])
 
-        yield [captains_with_keys_list[1]]
 
     db_mock = mock.MagicMock()
     db_mock.fetch = _mock_fetch
