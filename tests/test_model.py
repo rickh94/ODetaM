@@ -328,7 +328,7 @@ def test_save_converts_date(Captain):
 
 
 def test_save_converts_datetime(Event):
-    at = datetime.datetime.fromisoformat("2021-08-01T20:26:51.737609")
+    at = datetime.datetime(2021, 8, 1, 20, 26, 51, 737609)
     Event._db.put.return_value = {
         "at": at.timestamp(),
         "name": "Concert",
@@ -371,7 +371,7 @@ def test_get_converts_time_back(Appointment):
 
 
 def test_get_converts_datetime_back(Event):
-    at = datetime.datetime.fromisoformat("2021-08-01T20:26:51.737609")
+    at = datetime.datetime(2021, 8, 1, 20, 26, 51, 737609)
     Event._db.get.return_value = {
         "at": at.timestamp(),
         "name": "Concert",
