@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 from unittest import mock
 
@@ -49,6 +50,45 @@ def int_list_field():
     return DetaField(_mock)
 
 
+@pytest.fixture
+def date_field():
+    _mock = mock.MagicMock()
+    _mock.name = "date_field"
+    _mock.type_ = datetime.date
+    return DetaField(_mock)
+
+
+@pytest.fixture
+def datetime_field():
+    _mock = mock.MagicMock()
+    _mock.name = "datetime_field"
+    _mock.type_ = datetime.datetime
+    return DetaField(_mock)
+
+
+@pytest.fixture
+def time_field():
+    _mock = mock.MagicMock()
+    _mock.name = "time_field"
+    _mock.type_ = datetime.time
+    return DetaField(_mock)
+
+
+@pytest.fixture
+def a_date():
+    return datetime.date(2021, 1, 1)
+
+
+@pytest.fixture
+def a_datetime():
+    return datetime.datetime(2021, 1, 1, 1, 5, 2)
+
+
+@pytest.fixture
+def a_time():
+    return datetime.time(0, 10, 0, 40)
+
+
 def test_init():
     field = DetaField("field")
     assert field.field == "field"
@@ -77,7 +117,7 @@ def test_query_expression_nested_field():
 
 
 def test_eq(str_field):
-    qe = (str_field == "test")
+    qe = str_field == "test"
     assert isinstance(qe, DetaQuery)
     assert qe.condition == "str_field"
     assert qe.value == "test"
@@ -150,17 +190,17 @@ def test_range_float(float_field):
 
 
 def test_range_wrong_type(str_field):
-    with pytest.raises(InvalidDetaQuery):
-        str_field.range(1, 5)
+    with pytest.raises(TypeError):
+        str_field.range("1", "5")
 
 
 def test_range_wrong_lower(int_field):
-    with pytest.raises(InvalidDetaQuery):
+    with pytest.raises(TypeError):
         int_field.range("1", 5)
 
 
 def test_range_wrong_upper(int_field):
-    with pytest.raises(InvalidDetaQuery):
+    with pytest.raises(TypeError):
         int_field.range(1, "5")
 
 
@@ -225,3 +265,169 @@ def test_not_contains_wrong_list_type(int_list_field):
 def test_not_contains_arg_wrong_type(str_field):
     with pytest.raises(InvalidDetaQuery):
         str_field.not_contains(123)
+
+
+def test_query_eq_date(date_field, a_date):
+    qe = date_field == a_date
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field"
+    assert qe.value == int(a_date.strftime("%Y%d%m"))
+
+
+def test_query_ne_date(date_field, a_date):
+    qe = date_field != a_date
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field?ne"
+    assert qe.value == int(a_date.strftime("%Y%d%m"))
+
+
+def test_query_lt_date(date_field, a_date):
+    qe = date_field < a_date
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field?lt"
+    assert qe.value == int(a_date.strftime("%Y%d%m"))
+
+
+def test_query_gt_date(date_field, a_date):
+    qe = date_field > a_date
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field?gt"
+    assert qe.value == int(a_date.strftime("%Y%d%m"))
+
+
+def test_query_le_date(date_field, a_date):
+    qe = date_field <= a_date
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field?lte"
+    assert qe.value == int(a_date.strftime("%Y%d%m"))
+
+
+def test_query_ge_date(date_field, a_date):
+    qe = date_field >= a_date
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field?gte"
+    assert qe.value == int(a_date.strftime("%Y%d%m"))
+
+
+def test_date_range(date_field, a_date):
+    another_date = datetime.date(2021, 4, 2)
+    qe = date_field.range(a_date, another_date)
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "date_field?r"
+    assert qe.value == [
+        int(a_date.strftime("%Y%m%d")),
+        int(another_date.strftime("%Y%m%d")),
+    ]
+
+
+def test_query_eq_datetime(datetime_field, a_datetime):
+    qe = datetime_field == a_datetime
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field"
+    assert qe.value == a_datetime.timestamp()
+
+
+def test_query_ne_datetime(datetime_field, a_datetime):
+    qe = datetime_field != a_datetime
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field?ne"
+    assert qe.value == a_datetime.timestamp()
+
+
+def test_query_lt_datetime(datetime_field, a_datetime):
+    qe = datetime_field < a_datetime
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field?lt"
+    assert qe.value == a_datetime.timestamp()
+
+
+def test_query_gt_datetime(datetime_field, a_datetime):
+    qe = datetime_field > a_datetime
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field?gt"
+    assert qe.value == a_datetime.timestamp()
+
+
+def test_query_le_datetime(datetime_field, a_datetime):
+    qe = datetime_field <= a_datetime
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field?lte"
+    assert qe.value == a_datetime.timestamp()
+
+
+def test_query_ge_datetime(datetime_field, a_datetime):
+    qe = datetime_field >= a_datetime
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field?gte"
+    assert qe.value == a_datetime.timestamp()
+
+
+def test_datetime_range(datetime_field, a_datetime):
+    another_datetime = datetime.datetime(2021, 4, 2, 1, 2, 4)
+    qe = datetime_field.range(a_datetime, another_datetime)
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "datetime_field?r"
+    assert qe.value == [
+        a_datetime.timestamp(),
+        another_datetime.timestamp(),
+    ]
+
+
+def test_query_eq_time(time_field, a_time):
+    qe = time_field == a_time
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field"
+    assert qe.value == int(a_time.strftime("%H%M%S%f"))
+
+
+def test_query_ne_time(time_field, a_time):
+    qe = time_field != a_time
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field?ne"
+    assert qe.value == int(a_time.strftime("%H%M%S%f"))
+
+
+def test_query_lt_time(time_field, a_time):
+    qe = time_field < a_time
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field?lt"
+    assert qe.value == int(a_time.strftime("%H%M%S%f"))
+
+
+def test_query_gt_time(time_field, a_time):
+    qe = time_field > a_time
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field?gt"
+    assert qe.value == int(a_time.strftime("%H%M%S%f"))
+
+
+def test_query_le_time(time_field, a_time):
+    qe = time_field <= a_time
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field?lte"
+    assert qe.value == int(a_time.strftime("%H%M%S%f"))
+
+
+def test_query_ge_time(time_field, a_time):
+    qe = time_field >= a_time
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field?gte"
+    assert qe.value == int(a_time.strftime("%H%M%S%f"))
+
+
+def test_time_range(time_field, a_time):
+    another_time = datetime.time(1, 2, 4, 2)
+    qe = time_field.range(a_time, another_time)
+    assert isinstance(qe, DetaQuery)
+    assert qe.condition == "time_field?r"
+    assert qe.value == [
+        int(a_time.strftime("%H%M%S%f")),
+        int(another_time.strftime("%H%M%S%f")),
+    ]
+
+
+def test_compare_wrong_type(int_field):
+    with pytest.raises(TypeError):
+        int_field._check_type([1, 2, 3])
+    with pytest.raises(TypeError):
+        qe = int_field == "5"
