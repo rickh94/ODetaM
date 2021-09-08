@@ -1,6 +1,6 @@
 # ODetaM
 
-![Tests](https://github.com/rich94/ODetaM/actions/workflows/test.yml/badge.svg)
+[![Test](https://github.com/rickh94/ODetaM/actions/workflows/test.yml/badge.svg)](https://github.com/rickh94/ODetaM/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/rickh94/odetam/branch/main/graph/badge.svg?token=BLDIMHU9FB)](https://codecov.io/gh/rickh94/odetam)
 
 A simple ODM (Object Document Mapper) for [Deta Base](https://deta.sh) base on
