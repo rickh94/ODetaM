@@ -22,8 +22,10 @@ def IntegrationBasic(monkeypatch, unique_test_id):
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _Basic(DetaModel):
-        __db_name__ = "basic" + unique_test_id
         name: str
+
+        class Config:
+            table_name = "basic." + unique_test_id
 
     yield _Basic
     for item in _Basic.get_all():
@@ -60,10 +62,12 @@ def IntegrationMoreAttrs(monkeypatch, unique_test_id):
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _MoreAttrs(DetaModel):
-        __db_name__ = "moreattrs" + unique_test_id
         name: str
         group: int
         dt: datetime.datetime
+
+        class Config:
+            table_name = "moreattrs." + unique_test_id
 
     yield _MoreAttrs
     for item in _MoreAttrs.get_all():

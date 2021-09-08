@@ -23,8 +23,10 @@ async def IntegrationAsyncBasic(monkeypatch, unique_test_id):
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _AsyncBasic(AsyncDetaModel):
-        __db_name__ = "asyncbasic" + unique_test_id
         name: str
+
+        class Config:
+            table_name = "asyncbasic." + unique_test_id
 
     yield _AsyncBasic
     for item in await _AsyncBasic.get_all():
@@ -64,10 +66,12 @@ async def IntegrationAsyncMoreAttrs(monkeypatch, unique_test_id):
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _AsyncMoreAttrs(AsyncDetaModel):
-        __db_name__ = "asyncmoreattrs" + unique_test_id
         name: str
         group: int
         dt: datetime.datetime
+
+        class Config:
+            table_name = "asyncmoreattrs." + unique_test_id
 
     yield _AsyncMoreAttrs
     for item in await _AsyncMoreAttrs.get_all():

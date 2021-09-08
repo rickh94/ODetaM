@@ -2,12 +2,10 @@ import asyncio
 import datetime
 import ipaddress
 import os
-import random
 from typing import List, Optional
 from unittest import mock
 
 import pytest
-from faker import Faker
 from pydantic import EmailStr
 
 from odetam.async_model import AsyncDetaModel

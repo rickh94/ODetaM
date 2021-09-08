@@ -38,7 +38,9 @@ def handle_db_property(cls, deta_class):
 class DetaModelMetaClass(pydantic.main.ModelMetaclass):
     def __new__(mcs, name, bases, dct):
         cls = super().__new__(mcs, name, bases, dct)
-        if not getattr(cls, "__db_name__", None):
+        if getattr(cls.Config, "table_name", None):
+            cls.__db_name__ = cls.Config.table_name
+        else:
             cls.__db_name__ = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
         cls._db = None
 

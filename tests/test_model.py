@@ -1,17 +1,14 @@
 import datetime
 import ipaddress
 import os
-import random
 from typing import List, Optional
 from unittest import mock
 
 import deta
 import pytest
-import ujson
-from faker import Faker
 from pydantic import EmailStr
 
-from odetam import __version__, DetaModel
+from odetam import DetaModel
 from odetam.exceptions import NoProjectKey, ItemNotFound, DetaError
 from odetam.field import DetaField
 
@@ -140,6 +137,7 @@ def HasOptional(monkeypatch):
 
 
 def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
+    monkeypatch.setenv("PROJECT_KEY", "123_123")
     deta_mock = mock.MagicMock()
     instance_mock = mock.MagicMock()
     deta_mock.return_value = instance_mock
