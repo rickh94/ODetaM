@@ -1,6 +1,6 @@
 # ODetaM
 
-[![Build Status](https://travis-ci.org/rickh94/ODetaM.svg?branch=main)](https://travis-ci.org/rickh94/ODetaM)
+![Tests](https://github.com/rich94/ODetaM/actions/workflows/test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/rickh94/odetam/branch/main/graph/badge.svg?token=BLDIMHU9FB)](https://codecov.io/gh/rickh94/odetam)
 
 A simple ODM (Object Document Mapper) for [Deta Base](https://deta.sh) base on
@@ -23,12 +23,24 @@ PascalCase/CamelCase case to snake_case). A `key` field (Deta's unique id) will 
 automatically added to any model. You can supply the key on creation, or Deta will
 generate one automatically and it will be added to the object when it is saved.
 
+## Async Support
+
+Async/await is now supported! As of version 1.2.0, you can now 
+`from odetam.async_model import AsyncDetaModel`, inherit from that, and run 
+all the examples below just the same, but with `await` in front of the calls.
+
+You must `pip install aiodeta`, as this is optional functionality, so it does not 
+install automatically. This is the [aiodeta](https://github.com/leits/aiodeta/)
+package which is unofficial, but seems to work well and enables async support.
+
+
 ### Get All
 
 DetaModel.get_all() may be broken for large bases. The main deta python library has
 implemented some breaking changes (though definite improvements) around the fetching
 of records from the Base. They have implemented a new automatic pagination system 
 that I have not had time to play with yet. Queries are recommended!
+
 
 ## Example
 

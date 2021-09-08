@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import ipaddress
 import os
@@ -5,13 +6,11 @@ import random
 from typing import List, Optional
 from unittest import mock
 
-import deta
 import pytest
-import ujson
 from faker import Faker
 from pydantic import EmailStr
 
-from odetam import __version__, DetaModel
+from odetam.async_model import AsyncDetaModel
 from odetam.exceptions import NoProjectKey, ItemNotFound, DetaError
 from odetam.field import DetaField
 
@@ -19,7 +18,8 @@ from odetam.field import DetaField
 @pytest.fixture
 def Basic(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
-    class _Basic(DetaModel):
+
+    class _Basic(AsyncDetaModel):
         name: str
 
     _Basic._db = mock.MagicMock()
@@ -30,7 +30,8 @@ def Basic(monkeypatch):
 @pytest.fixture
 def Captain(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
-    class _Captain(DetaModel):
+
+    class _Captain(AsyncDetaModel):
         name: str
         joined: datetime.date
         ships: List[str]
@@ -42,7 +43,8 @@ def Captain(monkeypatch):
 @pytest.fixture
 def Appointment(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
-    class _Appointment(DetaModel):
+
+    class _Appointment(AsyncDetaModel):
         name: str
         at: datetime.time
 
@@ -53,7 +55,8 @@ def Appointment(monkeypatch):
 @pytest.fixture
 def Event(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
-    class _Event(DetaModel):
+
+    class _Event(AsyncDetaModel):
         name: str
         at: datetime.datetime
 
@@ -115,7 +118,8 @@ def captains_with_keys_list(captains_list):
 @pytest.fixture
 def UnrulyModel(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
-    class _UnrulyModel(DetaModel):
+
+    class _UnrulyModel(AsyncDetaModel):
         name: Optional[str]
         email: EmailStr
         ips: List[ipaddress.IPv4Address]
@@ -127,24 +131,41 @@ def UnrulyModel(monkeypatch):
 @pytest.fixture
 def HasOptional(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
-    class _HasOptional(DetaModel):
+
+    class _HasOptional(AsyncDetaModel):
         name: Optional[str]
 
     return _HasOptional
 
 
-def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
+def future_with(value):
+    fut = asyncio.Future()
+    fut.set_result(value)
+    return fut
+
+
+def put_returns_items(items):
+    if not isinstance(items, list):
+        items = [items]
+    return {"processed": {"items": items}}
+
+
+@pytest.mark.asyncio
+async def test_async_deta_meta_model_class_creates_db_lazily(monkeypatch):
+    monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     deta_mock = mock.MagicMock()
     instance_mock = mock.MagicMock()
     deta_mock.return_value = instance_mock
     db = mock.MagicMock()
+    db.put.return_value = future_with(put_returns_items({"key": "key1"}))
     instance_mock.Base.return_value = db
-    monkeypatch.setattr("odetam.model.Deta", deta_mock)
+    monkeypatch.setattr("odetam.async_model.AsyncDeta", deta_mock)
 
-    class ObjectExample(DetaModel):
+    class ObjectExample(AsyncDetaModel):
         name: str
 
-    ObjectExample(name="hi").save()
+    await ObjectExample(name="hi2").save()
 
     deta_mock.assert_called_with("123_123")
     instance_mock.Base.assert_called_with("object_example")
@@ -152,20 +173,21 @@ def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
     assert ObjectExample.__db__ == db
 
 
-def test_deta_meta_model_raises_error_with_no_project_key():
+@pytest.mark.asyncio
+async def test_async_deta_meta_model_raises_error_with_no_project_key():
     os.environ["PROJECT_KEY"] = ""
     with pytest.raises(NoProjectKey):
 
-        class ObjectExample(DetaModel):
+        class ObjectExample(AsyncDetaModel):
             pass
 
-        ObjectExample().save()
+        await ObjectExample().save()
 
     os.environ["PROJECT_KEY"] = "123_123"
 
 
-def test_deta_meta_model_assigns_fields():
-    class ObjectExample(DetaModel):
+def test_async_deta_meta_model_assigns_fields():
+    class ObjectExample(AsyncDetaModel):
         name: str
         age: int
 
@@ -173,30 +195,31 @@ def test_deta_meta_model_assigns_fields():
     assert isinstance(ObjectExample.age, DetaField)
 
 
-def test_basic_get(Basic):
-    Basic._db.get.return_value = {"name": "test", "key": "key2"}
-    new_thing = Basic.get(key="key2")
+@pytest.mark.asyncio
+async def test_basic_async_get(Basic):
+    Basic._db.get.return_value = future_with({"name": "test", "key": "key2"})
+    new_thing = await Basic.get(key="key2")
 
     Basic._db.get.assert_called_with("key2")
     assert new_thing.key == "key2"
     assert new_thing.name == "test"
 
 
-def test_get_not_found_raises_error(Captain):
-    Captain._db.get.return_value = None
+@pytest.mark.asyncio
+async def test_async_get_not_found_raises_error(Captain):
+    Captain._db.get.return_value = future_with(None)
     with pytest.raises(ItemNotFound):
-        Captain.get("key1")
+        await Captain.get("key1")
 
 
-def test_get_all(Captain, captains_with_keys_list):
-    def _mock_fetch():
-        return deta.base.FetchResponse(
-            count=len(captains_with_keys_list), last=None, items=captains_with_keys_list
-        )
+@pytest.mark.asyncio
+async def test_async_get_all(Captain, captains_with_keys_list):
+    async def _mock_query():
+        return {"items": captains_with_keys_list}
 
-    Captain._db.fetch = _mock_fetch
+    Captain._db.query = _mock_query
 
-    records = Captain.get_all()
+    records = await Captain.get_all()
     assert len(records) == len(captains_with_keys_list)
     for record in records:
         assert isinstance(record, Captain)
@@ -204,65 +227,68 @@ def test_get_all(Captain, captains_with_keys_list):
         assert Captain._deserialize(captain) in records
 
 
-def test_query(Captain, captains_with_keys_list):
-    def _mock_fetch(query_statement):
-        assert query_statement["example"] == "query"
-        return deta.base.FetchResponse(
-            count=1, last=None, items=captains_with_keys_list[1:2]
-        )
+@pytest.mark.asyncio
+async def test_async_query(Captain, captains_with_keys_list):
+    async def _mock_async_query(query_statement):
+        assert query_statement[0]["example"] == "query"
+        return {"items": captains_with_keys_list[1:2]}
 
-    Captain._db.fetch = _mock_fetch
+    Captain._db.query = _mock_async_query
     mock_query_statement = mock.MagicMock()
     mock_query_statement.as_query.return_value = {"example": "query"}
 
-    results = Captain.query(mock_query_statement)
+    results = await Captain.query(mock_query_statement)
 
     assert len(results) == 1
     assert Captain._deserialize(captains_with_keys_list[1]) in results
 
 
-def test_delete_key(Captain):
+@pytest.mark.asyncio
+async def test_async_delete_key(Captain):
     Captain._db = mock.MagicMock()
+    Captain._db.delete.return_value = future_with(None)
 
-    Captain.delete_key("testkey")
+    await Captain.delete_key("testkey")
     Captain._db.delete.assert_called_with("testkey")
 
 
-def test_put_many(Captain, captains_list, captains_with_keys_list, captains):
-    Captain._db.put_many.return_value = {
-        "processed": {"items": captains_with_keys_list}
-    }
-    results = Captain.put_many(captains)
+@pytest.mark.asyncio
+async def test_async_put_many(
+    Captain, captains_list, captains_with_keys_list, captains
+):
+    Captain._db.put.return_value = future_with(
+        put_returns_items(captains_with_keys_list)
+    )
+    results = await Captain.put_many(captains)
 
-    Captain._db.put_many.assert_called_with(captains_list)
+    Captain._db.put.assert_called_with(captains_list)
 
     assert len(results) == len(captains)
     for captain in captains_with_keys_list:
         assert Captain._deserialize(captain) in results
 
 
-def test_put_more_than_25(Captain, make_bunch_of_random_captains):
+@pytest.mark.asyncio
+async def test_async_put_more_than_25(Captain, make_bunch_of_random_captains):
     """Test put many is correctly batched for lists of items larger than
     25.
     """
     captains, captain_data, captain_data_with_keys = make_bunch_of_random_captains(
         Captain, 52
     )
-    # the three calls should have batches of 25 and the api will return process data
-    # in this form
-    Captain._db.put_many.side_effect = [
-        {"processed": {"items": captain_data_with_keys[0:25]}},
-        {"processed": {"items": captain_data_with_keys[25:50]}},
-        {"processed": {"items": captain_data_with_keys[50:]}},
+    Captain._db.put.side_effect = [
+        future_with({"processed": {"items": captain_data_with_keys[0:25]}}),
+        future_with({"processed": {"items": captain_data_with_keys[25:50]}}),
+        future_with({"processed": {"items": captain_data_with_keys[50:]}}),
     ]
-    results = Captain.put_many(captains)
+    results = await Captain.put_many(captains)
 
     # Two batches of 25, and the remaining records
-    assert Captain._db.put_many.call_count == 3
+    assert Captain._db.put.call_count == 3
     # put_many should have been called with each of the batches
-    Captain._db.put_many.assert_any_call(captain_data[0:25])
-    Captain._db.put_many.assert_any_call(captain_data[25:50])
-    Captain._db.put_many.assert_any_call(captain_data[50:])
+    Captain._db.put.assert_any_call(captain_data[0:25])
+    Captain._db.put.assert_any_call(captain_data[25:50])
+    Captain._db.put.assert_any_call(captain_data[50:])
 
     # resulting data should have been flattened and serialized, and have keys
     # added from database result
@@ -270,25 +296,29 @@ def test_put_more_than_25(Captain, make_bunch_of_random_captains):
         assert Captain._deserialize(item) in results
 
 
-def test_basic_save(Basic):
+@pytest.mark.asyncio
+async def test_async_basic_save(Basic):
     Basic._db = mock.MagicMock()
     data = {"name": "test"}
-    Basic._db.put.return_value = {**data, "key": "key1"}
+    Basic._db.put.return_value = future_with(put_returns_items({**data, "key": "key1"}))
     new_thing = Basic(name="test")
-    new_thing.save()
+    await new_thing.save()
 
-    Basic._db.put.assert_called_with(data)
+    Basic._db.put.assert_called_with([data])
     assert new_thing.key == "key1"
 
 
-def test_get_converts_date_back(Captain):
-    Captain._db.get.return_value = {
-        "name": "Jean-Luc Picard",
-        "joined": 23230101,
-        "ships": ["Enterprise-D", "Enterprise-E", "La Sirena"],
-        "key": "key5",
-    }
-    picard = Captain.get("key5")
+@pytest.mark.asyncio
+async def test_async_get_converts_date_back(Captain):
+    Captain._db.get.return_value = future_with(
+        {
+            "name": "Jean-Luc Picard",
+            "joined": 23230101,
+            "ships": ["Enterprise-D", "Enterprise-E", "La Sirena"],
+            "key": "key5",
+        }
+    )
+    picard = await Captain.get("key5")
 
     Captain._db.get.assert_called_with("key5")
 
@@ -298,52 +328,68 @@ def test_get_converts_date_back(Captain):
     assert picard.key == "key5"
 
 
-def test_save_converts_date(Captain):
+@pytest.mark.asyncio
+async def test_async_save_converts_date(Captain):
     data = {"name": "Saru", "joined": 22490101, "ships": ["Discovery"]}
-    Captain._db.put.return_value = {**data, "key": "key8"}
+    Captain._db.put.return_value = future_with(
+        put_returns_items({**data, "key": "key8"})
+    )
     saru = Captain(name=data["name"], ships=["Discovery"], joined="2249-01-01")
-    saru.save()
+    await saru.save()
 
-    Captain._db.put.assert_called_with(data)
+    Captain._db.put.assert_called_with([data])
     assert saru.key == "key8"
 
 
-def test_save_converts_datetime(Event):
+@pytest.mark.asyncio
+async def test_async_save_converts_datetime(Event):
     at = datetime.datetime(2021, 8, 1, 20, 26, 51, 737609)
-    Event._db.put.return_value = {
-        "at": at.timestamp(),
-        "name": "Concert",
-        "key": "key8",
-    }
+    Event._db.put.return_value = future_with(
+        put_returns_items(
+            {
+                "at": at.timestamp(),
+                "name": "Concert",
+                "key": "key8",
+            }
+        )
+    )
     concert = Event(name="Concert", at=at)
-    concert.save()
+    await concert.save()
 
-    Event._db.put.assert_called_with({"name": "Concert", "at": at.timestamp()})
+    Event._db.put.assert_called_with([{"name": "Concert", "at": at.timestamp()}])
     assert concert.key == "key8"
 
 
-def test_save_converts_time(Appointment):
+@pytest.mark.asyncio
+async def test_async_save_converts_time(Appointment):
     at = datetime.time(12, 11, 1, 12)
-    Appointment._db.put.return_value = {
-        "at": 1211101000012,
-        "name": "Concert",
-        "key": "key8",
-    }
+    Appointment._db.put.return_value = future_with(
+        put_returns_items(
+            {
+                "at": 1211101000012,
+                "name": "Concert",
+                "key": "key8",
+            }
+        )
+    )
     doctor = Appointment(name="Doctor", at=at)
-    doctor.save()
+    await doctor.save()
 
-    Appointment._db.put.assert_called_with({"name": "Doctor", "at": 121101000012})
+    Appointment._db.put.assert_called_with([{"name": "Doctor", "at": 121101000012}])
     assert doctor.key == "key8"
 
 
-def test_get_converts_time_back(Appointment):
-    Appointment._db.get.return_value = {
-        "key": "key5",
-        "name": "doctor",
-        "at": 121101000012,
-    }
+@pytest.mark.asyncio
+async def test_async_get_converts_time_back(Appointment):
+    Appointment._db.get.return_value = future_with(
+        {
+            "key": "key5",
+            "name": "doctor",
+            "at": 121101000012,
+        }
+    )
 
-    doctor = Appointment.get("key5")
+    doctor = await Appointment.get("key5")
 
     Appointment._db.get.assert_called_with("key5")
 
@@ -351,14 +397,17 @@ def test_get_converts_time_back(Appointment):
     assert doctor.at == datetime.time(12, 11, 1, 12)
 
 
-def test_get_converts_datetime_back(Event):
+@pytest.mark.asyncio
+async def test_async_get_converts_datetime_back(Event):
     at = datetime.datetime(2021, 8, 1, 20, 26, 51, 737609)
-    Event._db.get.return_value = {
-        "at": at.timestamp(),
-        "name": "Concert",
-        "key": "key8",
-    }
-    concert = Event.get("key8")
+    Event._db.get.return_value = future_with(
+        {
+            "at": at.timestamp(),
+            "name": "Concert",
+            "key": "key8",
+        }
+    )
+    concert = await Event.get("key8")
 
     Event._db.get.assert_called_with("key8")
 
@@ -367,71 +416,35 @@ def test_get_converts_datetime_back(Event):
     assert concert.at == at
 
 
-def test_save_existing(Captain):
+@pytest.mark.asyncio
+async def test_async_save_existing(Captain):
     data = {
         "name": "Katheryn Janeway",
         "joined": 23600101,
         "ships": ["Voyager"],
         "key": "key25",
     }
-    Captain._db.put.return_value = data
+    Captain._db.put.return_value = future_with(put_returns_items(data))
     janeway = Captain(
         name=data["name"], ships=data["ships"], key=data["key"], joined="2360-01-01"
     )
-    janeway.save()
-    Captain._db.put.assert_called_with(data)
+    await janeway.save()
+    Captain._db.put.assert_called_with([data])
     assert janeway.key == "key25"
 
 
-def test_delete(captains_list, Captain):
+@pytest.mark.asyncio
+async def test_delete(captains_list, Captain):
+    Captain._db.delete.return_value = future_with(None)
     captain = Captain.parse_obj(captains_list[0])
     captain.key = "key22"
-    captain.delete()
+    await captain.delete()
     Captain._db.delete.assert_called_with("key22")
     assert captain.key is None
 
 
-def test_delete_no_key(captains):
+@pytest.mark.asyncio
+async def test_delete_no_key(captains, Captain):
+    Captain._db.delete.return_value = future_with(None)
     with pytest.raises(DetaError):
-        captains[1].delete()
-
-
-def test_serialize_optional_attribute(HasOptional):
-    thing = HasOptional(name=None)
-
-    assert thing._serialize() == {"name": None}
-
-
-def test_serialize_weird_attributes(UnrulyModel):
-    unruly = UnrulyModel(email="test@example.com", ips=["192.168.1.1", "10.0.1.1"])
-
-    assert unruly._serialize() == {
-        "name": None,
-        "email": "test@example.com",
-        "ips": ["192.168.1.1", "10.0.1.1"],
-    }
-
-
-def test_deserialize_optional_attribute(HasOptional):
-    thing = HasOptional._deserialize({})
-
-    print(HasOptional.name.field.type_)
-
-    assert thing.name is None
-
-
-def test_deserialize_weird_attributes(UnrulyModel):
-    unruly = UnrulyModel._deserialize(
-        {
-            "name": None,
-            "email": "test@example.com",
-            "ips": ["192.168.1.1", "10.0.1.1"],
-        }
-    )
-
-    assert unruly.name is None
-    assert unruly.email == "test@example.com"
-    assert unruly.ips == [
-        ipaddress.IPv4Address("192.168.1.1"),
-        ipaddress.IPv4Address("10.0.1.1"),
-    ]
+        await captains[1].delete()
