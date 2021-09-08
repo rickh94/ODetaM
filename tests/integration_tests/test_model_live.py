@@ -16,12 +16,13 @@ def reduce_items_to_keys(items):
 
 
 @pytest.fixture
-def IntegrationBasic(monkeypatch):
+def IntegrationBasic(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _Basic(DetaModel):
+        __db_name__ = "basic" + unique_test_id
         name: str
 
     yield _Basic
@@ -53,12 +54,13 @@ def gen_basic_items(IntegrationBasic):
 
 
 @pytest.fixture
-def IntegrationMoreAttrs(monkeypatch):
+def IntegrationMoreAttrs(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _MoreAttrs(DetaModel):
+        __db_name__ = "moreattrs" + unique_test_id
         name: str
         group: int
         dt: datetime.datetime

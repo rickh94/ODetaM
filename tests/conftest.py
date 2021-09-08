@@ -1,9 +1,19 @@
 import random
+import uuid
 
 import pytest
 from faker import Faker
 
 from odetam.query import DetaQuery
+
+TEST_UUID = uuid.uuid4()
+
+print("unique test id", TEST_UUID)
+
+
+@pytest.fixture
+def unique_test_id():
+    return str(TEST_UUID)
 
 
 @pytest.fixture
@@ -58,4 +68,5 @@ def make_bunch_of_random_captains(random_captain_data):
                 {**captain, "key": f"key{random.randint(0, 500)}"}
             )
         return captains, captain_data, captain_data_with_keys
+
     return _generate

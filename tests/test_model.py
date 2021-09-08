@@ -19,6 +19,7 @@ from odetam.field import DetaField
 @pytest.fixture
 def Basic(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     class _Basic(DetaModel):
         name: str
 
@@ -30,6 +31,7 @@ def Basic(monkeypatch):
 @pytest.fixture
 def Captain(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     class _Captain(DetaModel):
         name: str
         joined: datetime.date
@@ -42,6 +44,7 @@ def Captain(monkeypatch):
 @pytest.fixture
 def Appointment(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     class _Appointment(DetaModel):
         name: str
         at: datetime.time
@@ -53,6 +56,7 @@ def Appointment(monkeypatch):
 @pytest.fixture
 def Event(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     class _Event(DetaModel):
         name: str
         at: datetime.datetime
@@ -115,6 +119,7 @@ def captains_with_keys_list(captains_list):
 @pytest.fixture
 def UnrulyModel(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     class _UnrulyModel(DetaModel):
         name: Optional[str]
         email: EmailStr
@@ -127,6 +132,7 @@ def UnrulyModel(monkeypatch):
 @pytest.fixture
 def HasOptional(monkeypatch):
     monkeypatch.setenv("PROJECT_KEY", "123_123")
+
     class _HasOptional(DetaModel):
         name: Optional[str]
 

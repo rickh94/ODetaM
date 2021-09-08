@@ -92,9 +92,9 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         # # this is dumb, but it ensures everything is in a json-serializable form
         # data = ujson.loads(self.json(exclude=exclude))
         saved = await self._db_put([self._serialize()])
-        if 'errors' in saved:
-            raise DetaError(saved['errors'])
-        self.key = saved['processed']['items'][0]['key']
+        if "errors" in saved:
+            raise DetaError(saved["errors"])
+        self.key = saved["processed"]["items"][0]["key"]
 
     async def delete(self):
         """Delete the open object from the database. The object will still exist in

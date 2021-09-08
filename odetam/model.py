@@ -38,7 +38,8 @@ def handle_db_property(cls, deta_class):
 class DetaModelMetaClass(pydantic.main.ModelMetaclass):
     def __new__(mcs, name, bases, dct):
         cls = super().__new__(mcs, name, bases, dct)
-        cls.__db_name__ = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+        if not getattr(cls, "__db_name__", None):
+            cls.__db_name__ = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
         cls._db = None
 
         for name, field in cls.__fields__.items():
@@ -111,13 +112,12 @@ class BaseDetaModel(BaseModel):
 
     @classmethod
     def _return_item_or_raise(cls, item):
-        if item is None or item.get('key') == 'None':
+        if item is None or item.get("key") == "None":
             raise ItemNotFound("Could not find item matching that key")
         try:
             return cls._deserialize(item)
         except ValidationError:
             raise ItemNotFound("Could not find item matching that key")
-
 
 
 class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
@@ -203,4 +203,3 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
             raise DetaError("Item does not have key for deletion")
         self.delete_key(self.key)
         self.key = None
-

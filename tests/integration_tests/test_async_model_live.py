@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import os
 
@@ -18,12 +17,13 @@ def reduce_items_to_keys(items):
 
 @pytest.fixture
 @pytest.mark.asyncio
-async def IntegrationAsyncBasic(monkeypatch):
+async def IntegrationAsyncBasic(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _AsyncBasic(AsyncDetaModel):
+        __db_name__ = "asyncbasic" + unique_test_id
         name: str
 
     yield _AsyncBasic
@@ -58,12 +58,13 @@ async def gen_async_basic_items(IntegrationAsyncBasic):
 
 @pytest.fixture
 @pytest.mark.asyncio
-async def IntegrationAsyncMoreAttrs(monkeypatch):
+async def IntegrationAsyncMoreAttrs(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
     monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _AsyncMoreAttrs(AsyncDetaModel):
+        __db_name__ = "asyncmoreattrs" + unique_test_id
         name: str
         group: int
         dt: datetime.datetime
@@ -156,14 +157,17 @@ async def test_async_query(gen_async_more_attrs_items, IntegrationAsyncMoreAttrs
     reason="Integration Tests require project to test against.",
 )
 @pytest.mark.asyncio
-async def test_async_datetime_query(gen_async_more_attrs_items, IntegrationAsyncMoreAttrs):
+async def test_async_datetime_query(
+    gen_async_more_attrs_items, IntegrationAsyncMoreAttrs
+):
     group1 = await gen_async_more_attrs_items(10, 1)
     group2 = await gen_async_more_attrs_items(
         5, 2, datetime.datetime.now() - datetime.timedelta(days=5)
     )
 
     found = await IntegrationAsyncMoreAttrs.query(
-        IntegrationAsyncMoreAttrs.dt < datetime.datetime.now() - datetime.timedelta(hours=36)
+        IntegrationAsyncMoreAttrs.dt
+        < datetime.datetime.now() - datetime.timedelta(hours=36)
     )
 
     assert len(found) == len(group2)
