@@ -68,7 +68,7 @@ class BaseDetaModel(BaseModel):
                 continue
             if field_name in exclude:
                 continue
-            if not getattr(self, field_name, None):
+            if getattr(self, field_name, None) is None:
                 as_dict[field_name] = None
                 continue
             if field.type_ in DETA_TYPES:
@@ -91,7 +91,7 @@ class BaseDetaModel(BaseModel):
     def _deserialize(cls, data):
         as_dict = {}
         for field_name, field in cls.__fields__.items():
-            if not data.get(field_name):
+            if data.get(field_name) is None:
                 continue
             if field.type_ in DETA_TYPES:
                 as_dict[field_name] = data[field_name]
