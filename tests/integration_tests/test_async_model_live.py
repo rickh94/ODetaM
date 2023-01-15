@@ -20,7 +20,7 @@ def reduce_items_to_keys(items):
 async def IntegrationAsyncBasic(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
-    monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
+    monkeypatch.setenv("DETA_PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _AsyncBasic(AsyncDetaModel):
         name: str
@@ -31,7 +31,7 @@ async def IntegrationAsyncBasic(monkeypatch, unique_test_id):
     yield _AsyncBasic
     for item in await _AsyncBasic.get_all():
         await item.delete()
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ async def gen_async_basic_items(IntegrationAsyncBasic):
 async def IntegrationAsyncMoreAttrs(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
-    monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
+    monkeypatch.setenv("DETA_PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _AsyncMoreAttrs(AsyncDetaModel):
         name: str
@@ -76,7 +76,7 @@ async def IntegrationAsyncMoreAttrs(monkeypatch, unique_test_id):
     yield _AsyncMoreAttrs
     for item in await _AsyncMoreAttrs.get_all():
         await item.delete()
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ repository = "https://github.com/rickh94/odetam"
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
 pydantic = "^1.7"
-deta = "^1.0"
+deta = {extras = ["async"], version = "1.1.0a2"}
 ujson = "^4.0"
 
 [tool.poetry.dev-dependencies]
@@ -17,7 +17,6 @@ pytest = "^5.4"
 pytest-cov = "^2.10"
 faker = "^5.0"
 pydantic = {extras = ["email"], version = "^1.8.2"}
-aiodeta = "^0.1.2"
 pytest-asyncio = "^0.15.1"
 
 [build-system]

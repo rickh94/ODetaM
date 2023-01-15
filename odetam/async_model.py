@@ -6,7 +6,7 @@ from odetam.query import DetaQueryList, DetaQueryStatement, DetaQuery
 
 try:
     # noinspection PyPackageRequirements
-    from aiodeta import Deta as AsyncDeta
+    from deta import AsyncBase
 except ImportError:
     raise ImportError(
         "You must have aiodeta installed to use the async model. "
@@ -17,7 +17,7 @@ except ImportError:
 class AsyncDetaModelMetaClass(DetaModelMetaClass):
     @property
     def __db__(cls):
-        return handle_db_property(cls, AsyncDeta)
+        return handle_db_property(cls, AsyncBase)
 
 
 class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
@@ -36,19 +36,16 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     @classmethod
     async def get_all(cls):
         """Get all the records from the database"""
-        res = await cls.__db__.query()
-        return [cls._deserialize(record) for record in res["items"]]
+        records = await cls.__db__.fetch()
+        return [cls._deserialize(record) for record in records.items]
 
     @classmethod
     async def query(
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
         """Get items from database based on the query."""
-        processed_query = query_statement.as_query()
-        if not isinstance(processed_query, list):
-            processed_query = [processed_query]
-        found = await cls.__db__.query(processed_query)
-        return [cls._deserialize(item) for item in found["items"]]
+        found = await cls.__db__.fetch(query_statement.as_query())
+        return [cls._deserialize(item) for item in found.items]
 
     @classmethod
     async def delete_key(cls, key):
@@ -71,11 +68,11 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
             # noinspection PyProtectedMember
             records.append(item._serialize(exclude=exclude))
             if len(records) == 25:
-                result = await cls.__db__.put(records)
+                result = await cls.__db__.put_many(records)
                 processed.extend(result["processed"]["items"])
                 records = []
         if records:
-            result = await cls.__db__.put(records)
+            result = await cls.__db__.put_many(records)
             processed.extend(result["processed"]["items"])
         return [cls._deserialize(rec) for rec in processed]
 
@@ -91,10 +88,8 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         #     exclude.add("key")
         # # this is dumb, but it ensures everything is in a json-serializable form
         # data = ujson.loads(self.json(exclude=exclude))
-        saved = await self._db_put([self._serialize()])
-        if "errors" in saved:
-            raise DetaError(saved["errors"])
-        self.key = saved["processed"]["items"][0]["key"]
+        saved = await self._db_put(self._serialize())
+        self.key = saved["key"]
 
     async def delete(self):
         """Delete the open object from the database. The object will still exist in

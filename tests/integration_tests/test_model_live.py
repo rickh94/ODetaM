@@ -19,7 +19,7 @@ def reduce_items_to_keys(items):
 def IntegrationBasic(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
-    monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
+    monkeypatch.setenv("DETA_PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _Basic(DetaModel):
         name: str
@@ -30,7 +30,7 @@ def IntegrationBasic(monkeypatch, unique_test_id):
     yield _Basic
     for item in _Basic.get_all():
         item.delete()
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def gen_basic_items(IntegrationBasic):
 def IntegrationMoreAttrs(monkeypatch, unique_test_id):
     if not INTEGRATION_TEST_KEY:
         raise Exception("Integration tests require key.")
-    monkeypatch.setenv("PROJECT_KEY", INTEGRATION_TEST_KEY)
+    monkeypatch.setenv("DETA_PROJECT_KEY", INTEGRATION_TEST_KEY)
 
     class _MoreAttrs(DetaModel):
         name: str
@@ -72,7 +72,7 @@ def IntegrationMoreAttrs(monkeypatch, unique_test_id):
     yield _MoreAttrs
     for item in _MoreAttrs.get_all():
         item.delete()
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
 
 @pytest.fixture
