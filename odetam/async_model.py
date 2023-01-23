@@ -21,6 +21,10 @@ class AsyncDetaModelMetaClass(DetaModelMetaClass):
 
 
 class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.key = self.key or None
+
     @classmethod
     async def get(cls, key):
         """
