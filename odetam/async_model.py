@@ -40,16 +40,26 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     @classmethod
     async def get_all(cls):
         """Get all the records from the database"""
-        records = await cls.__db__.fetch()
-        return [cls._deserialize(record) for record in records.items]
+        response: FetchResponse = await cls.__db__.fetch() 
+        records = response.items
+        while response.last:
+            response = await cls.__db__.fetch(last=response.last)
+            records += response.items
+
+        return [cls._deserialize(record) for record in records]
 
     @classmethod
     async def query(
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
         """Get items from database based on the query."""
-        found = await cls.__db__.fetch(query_statement.as_query())
-        return [cls._deserialize(item) for item in found.items]
+        response: FetchResponse = await cls.__db__.fetch(query_statement.as_query()) 
+        records = response.items
+        while response.last:
+            response = await cls.__db__.fetch(query_statement.as_query(), last=response.last)
+            records += response.items
+            
+        return [cls._deserialize(item) for item in records]
 
     @classmethod
     async def delete_key(cls, key):
