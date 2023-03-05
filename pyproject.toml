@@ -13,14 +13,13 @@ deta = "^1.0"
 ujson = "^4.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.4"
 pytest-cov = "^2.10"
-faker = "^5.0"
-pydantic = {extras = ["email"], version = "^1.8.2"}
+faker = "^17.6.0"
+pydantic = { extras = ["email"], version = "^1.8.2" }
 aiodeta = "^0.1.2"
 pytest-asyncio = "^0.15.1"
+pytest = "^7.2.2"
 
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
