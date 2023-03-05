@@ -71,7 +71,8 @@ class BaseDetaModel(BaseModel):
             elif field.type_ == datetime.datetime:
                 as_dict[field_name] = getattr(self, field_name).timestamp()
             elif field.type_ == datetime.date:
-                as_dict[field_name] = int(getattr(self, field_name).strftime("%Y%m%d"))
+                as_dict[field_name] = int(
+                    getattr(self, field_name).strftime("%Y%m%d"))
             elif field.type_ == datetime.time:
                 as_dict[field_name] = int(
                     getattr(self, field_name).strftime("%H%M%S%f")
@@ -91,7 +92,8 @@ class BaseDetaModel(BaseModel):
             if field.type_ in DETA_TYPES:
                 as_dict[field_name] = data[field_name]
             elif field.type_ == datetime.datetime:
-                as_dict[field_name] = datetime.datetime.fromtimestamp(data[field_name])
+                as_dict[field_name] = datetime.datetime.fromtimestamp(
+                    data[field_name])
             elif field.type_ == datetime.date:
                 as_dict[field_name] = datetime.datetime.strptime(
                     str(data[field_name]), "%Y%m%d"
