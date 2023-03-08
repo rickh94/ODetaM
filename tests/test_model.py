@@ -152,7 +152,7 @@ def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
     monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
     db_mock = mock.MagicMock()
     db_instance_mock = mock.MagicMock()
-    db_mock.return_value = db_instance_mock    
+    db_mock.return_value = db_instance_mock
     monkeypatch.setattr("odetam.model.Base", db_mock)
 
     class ObjectExample(DetaModel):
@@ -345,8 +345,7 @@ def test_save_converts_time(Appointment):
     doctor = Appointment(name="Doctor", at=at)
     doctor.save()
 
-    Appointment._db.put.assert_called_with(
-        {"name": "Doctor", "at": 121101000012})
+    Appointment._db.put.assert_called_with({"name": "Doctor", "at": 121101000012})
     assert doctor.key == "key8"
 
 
@@ -417,8 +416,7 @@ def test_serialize_optional_attribute(HasOptional):
 
 
 def test_serialize_weird_attributes(UnrulyModel):
-    unruly = UnrulyModel(email="test@example.com",
-                         ips=["192.168.1.1", "10.0.1.1"])
+    unruly = UnrulyModel(email="test@example.com", ips=["192.168.1.1", "10.0.1.1"])
 
     assert unruly._serialize() == {
         "name": None,
@@ -453,22 +451,15 @@ def test_deserialize_weird_attributes(UnrulyModel):
 
 
 def test_falsy_values_serialize_correctly(Falsy):
-    falsy = Falsy(name='', is_true=False)
+    falsy = Falsy(name="", is_true=False)
 
-    assert falsy._serialize() == {
-        "name": "",
-        "is_true": False
-    }
+    assert falsy._serialize() == {"name": "", "is_true": False}
 
 
 def test_falsy_values_deserialize_correctly(Falsy):
-    data = {
-        "name": "",
-        "is_true": False
-    }
+    data = {"name": "", "is_true": False}
 
     falsy = Falsy._deserialize(data)
 
     assert falsy.name is not None
     assert falsy.is_true is not None
-

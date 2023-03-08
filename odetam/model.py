@@ -71,8 +71,7 @@ class BaseDetaModel(BaseModel):
             elif field.type_ == datetime.datetime:
                 as_dict[field_name] = getattr(self, field_name).timestamp()
             elif field.type_ == datetime.date:
-                as_dict[field_name] = int(
-                    getattr(self, field_name).strftime("%Y%m%d"))
+                as_dict[field_name] = int(getattr(self, field_name).strftime("%Y%m%d"))
             elif field.type_ == datetime.time:
                 as_dict[field_name] = int(
                     getattr(self, field_name).strftime("%H%M%S%f")
@@ -92,8 +91,7 @@ class BaseDetaModel(BaseModel):
             if field.type_ in DETA_TYPES:
                 as_dict[field_name] = data[field_name]
             elif field.type_ == datetime.datetime:
-                as_dict[field_name] = datetime.datetime.fromtimestamp(
-                    data[field_name])
+                as_dict[field_name] = datetime.datetime.fromtimestamp(data[field_name])
             elif field.type_ == datetime.date:
                 as_dict[field_name] = datetime.datetime.strptime(
                     str(data[field_name]), "%Y%m%d"
@@ -120,10 +118,6 @@ class BaseDetaModel(BaseModel):
 
 
 class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.key = self.key or None
-
     @classmethod
     def get(cls, key):
         """
@@ -139,7 +133,7 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
     @classmethod
     def get_all(cls):
         """Get all the records from the database"""
-        response: FetchResponse = cls.__db__.fetch() 
+        response: FetchResponse = cls.__db__.fetch()
         records = response.items
         while response.last:
             response = cls.__db__.fetch(last=response.last)
@@ -152,12 +146,12 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
         """Get items from database based on the query."""
-        response: FetchResponse = cls.__db__.fetch(query_statement.as_query()) 
+        response: FetchResponse = cls.__db__.fetch(query_statement.as_query())
         records = response.items
         while response.last:
             response = cls.__db__.fetch(query_statement.as_query(), last=response.last)
             records += response.items
-            
+
         return [cls._deserialize(item) for item in records]
 
     @classmethod

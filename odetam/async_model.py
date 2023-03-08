@@ -1,17 +1,10 @@
 from typing import Union
 
+from deta import AsyncBase
+from deta.base import FetchResponse
 from odetam.exceptions import DetaError
 from odetam.model import BaseDetaModel, DetaModelMetaClass, handle_db_property
 from odetam.query import DetaQueryList, DetaQueryStatement, DetaQuery
-
-try:
-    # noinspection PyPackageRequirements
-    from deta import AsyncBase
-except ImportError:
-    raise ImportError(
-        "You must have aiodeta installed to use the async model. "
-        "Run `pip install aiodeta`."
-    )
 
 
 class AsyncDetaModelMetaClass(DetaModelMetaClass):
@@ -21,10 +14,6 @@ class AsyncDetaModelMetaClass(DetaModelMetaClass):
 
 
 class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.key = self.key or None
-
     @classmethod
     async def get(cls, key):
         """
@@ -40,7 +29,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     @classmethod
     async def get_all(cls):
         """Get all the records from the database"""
-        response: FetchResponse = await cls.__db__.fetch() 
+        response: FetchResponse = await cls.__db__.fetch()
         records = response.items
         while response.last:
             response = await cls.__db__.fetch(last=response.last)
@@ -53,12 +42,14 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
         """Get items from database based on the query."""
-        response: FetchResponse = await cls.__db__.fetch(query_statement.as_query()) 
+        response: FetchResponse = await cls.__db__.fetch(query_statement.as_query())
         records = response.items
         while response.last:
-            response = await cls.__db__.fetch(query_statement.as_query(), last=response.last)
+            response = await cls.__db__.fetch(
+                query_statement.as_query(), last=response.last
+            )
             records += response.items
-            
+
         return [cls._deserialize(item) for item in records]
 
     @classmethod
