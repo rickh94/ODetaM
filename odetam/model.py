@@ -5,10 +5,11 @@ from typing import Optional, Union, List
 
 import pydantic
 import ujson
-from deta import Deta
+from deta import Base
+from deta.base import FetchResponse
 from pydantic import Field, BaseModel, ValidationError
 
-from odetam.exceptions import NoProjectKey, DetaError, ItemNotFound
+from odetam.exceptions import DetaError, ItemNotFound
 from odetam.field import DetaField
 from odetam.query import DetaQuery, DetaQueryStatement, DetaQueryList
 
@@ -21,17 +22,11 @@ DETA_BASIC_LIST_TYPES = [
 DETA_TYPES = DETA_BASIC_TYPES + DETA_OPTIONAL_TYPES + DETA_BASIC_LIST_TYPES
 
 
-def handle_db_property(cls, deta_class):
+def handle_db_property(cls, base_class: Base):
     if cls._db:
         return cls._db
-    try:
-        deta = deta_class(os.getenv("PROJECT_KEY"))
-    except (AttributeError, AssertionError, ValueError):
-        raise NoProjectKey(
-            "Ensure that the 'PROJECT_KEY' environment variable is set to your "
-            "project key"
-        )
-    cls._db = deta.Base(cls.__db_name__)
+
+    cls._db = base_class(cls.__db_name__)
     return cls._db
 
 
@@ -50,7 +45,7 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
 
     @property
     def __db__(cls):
-        return handle_db_property(cls, Deta)
+        return handle_db_property(cls, Base)
 
 
 class BaseDetaModel(BaseModel):
@@ -144,7 +139,12 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
     @classmethod
     def get_all(cls):
         """Get all the records from the database"""
-        records = cls.__db__.fetch().items
+        response: FetchResponse = cls.__db__.fetch() 
+        records = response.items
+        while response.last:
+            response = cls.__db__.fetch(last=response.last)
+            records += response.items
+
         return [cls._deserialize(record) for record in records]
 
     @classmethod
@@ -152,8 +152,13 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
     ):
         """Get items from database based on the query."""
-        found = cls.__db__.fetch(query_statement.as_query()).items
-        return [cls._deserialize(item) for item in found]
+        response: FetchResponse = cls.__db__.fetch(query_statement.as_query()) 
+        records = response.items
+        while response.last:
+            response = cls.__db__.fetch(query_statement.as_query(), last=response.last)
+            records += response.items
+            
+        return [cls._deserialize(item) for item in records]
 
     @classmethod
     def delete_key(cls, key):

@@ -9,13 +9,13 @@ import pytest
 from pydantic import EmailStr
 
 from odetam import DetaModel
-from odetam.exceptions import NoProjectKey, ItemNotFound, DetaError
+from odetam.exceptions import ItemNotFound, DetaError
 from odetam.field import DetaField
 
 
 @pytest.fixture
 def Basic(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
     class _Basic(DetaModel):
         name: str
@@ -27,7 +27,7 @@ def Basic(monkeypatch):
 # noinspection PyPep8Naming
 @pytest.fixture
 def Captain(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
     class _Captain(DetaModel):
         name: str
@@ -40,7 +40,7 @@ def Captain(monkeypatch):
 
 @pytest.fixture
 def Appointment(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
     class _Appointment(DetaModel):
         name: str
@@ -52,7 +52,7 @@ def Appointment(monkeypatch):
 
 @pytest.fixture
 def Event(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
     class _Event(DetaModel):
         name: str
@@ -127,7 +127,7 @@ def captains_with_keys_list(captains_list):
 # noinspection PyPep8Naming
 @pytest.fixture
 def UnrulyModel(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
     class _UnrulyModel(DetaModel):
         name: Optional[str]
@@ -140,7 +140,7 @@ def UnrulyModel(monkeypatch):
 # noinspection PyPep8Naming
 @pytest.fixture
 def HasOptional(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
 
     class _HasOptional(DetaModel):
         name: Optional[str]
@@ -149,35 +149,32 @@ def HasOptional(monkeypatch):
 
 
 def test_deta_meta_model_class_creates_db_lazily(monkeypatch):
-    monkeypatch.setenv("PROJECT_KEY", "123_123")
-    deta_mock = mock.MagicMock()
-    instance_mock = mock.MagicMock()
-    deta_mock.return_value = instance_mock
-    db = mock.MagicMock()
-    instance_mock.Base.return_value = db
-    monkeypatch.setattr("odetam.model.Deta", deta_mock)
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
+    db_mock = mock.MagicMock()
+    db_instance_mock = mock.MagicMock()
+    db_mock.return_value = db_instance_mock    
+    monkeypatch.setattr("odetam.model.Base", db_mock)
 
     class ObjectExample(DetaModel):
         name: str
 
     ObjectExample(name="hi").save()
 
-    deta_mock.assert_called_with("123_123")
-    instance_mock.Base.assert_called_with("object_example")
+    db_mock.assert_called_with("object_example")
     assert ObjectExample.__db_name__ == "object_example"
-    assert ObjectExample.__db__ == db
+    assert ObjectExample.__db__ == db_instance_mock
 
 
-def test_deta_meta_model_raises_error_with_no_project_key():
-    os.environ["PROJECT_KEY"] = ""
-    with pytest.raises(NoProjectKey):
+def test_deta_meta_model_raises_error_with_no_DETA_PROJECT_KEY():
+    os.environ["DETA_PROJECT_KEY"] = ""
+    with pytest.raises(AssertionError):
 
         class ObjectExample(DetaModel):
             pass
 
         ObjectExample().save()
 
-    os.environ["PROJECT_KEY"] = "123_123"
+    os.environ["DETA_PROJECT_KEY"] = "123_123"
 
 
 def test_deta_meta_model_assigns_fields():
