@@ -9,7 +9,7 @@ from deta import Base
 from deta.base import FetchResponse
 from pydantic import Field, BaseModel, ValidationError
 
-from odetam.exceptions import DetaError, ItemNotFound
+from odetam.exceptions import DetaError, ItemNotFound, InvalidKey
 from odetam.field import DetaField
 from odetam.query import DetaQuery, DetaQueryStatement, DetaQueryList
 
@@ -127,6 +127,8 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
 
         :raises ItemNotFound: No matching item was found
         """
+        if key is None:
+            raise InvalidKey("key cannot be None")
         item = cls.__db__.get(key)
         return cls._return_item_or_raise(item)
 

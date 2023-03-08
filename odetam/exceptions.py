@@ -8,3 +8,7 @@ class ItemNotFound(DetaError):
 
 class InvalidDetaQuery(DetaError):
     pass
+
+
+class InvalidKey(DetaError):
+    pass

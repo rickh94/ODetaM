@@ -9,7 +9,7 @@ import pytest
 from pydantic import EmailStr
 
 from odetam.async_model import AsyncDetaModel
-from odetam.exceptions import ItemNotFound, DetaError
+from odetam.exceptions import ItemNotFound, DetaError, InvalidKey
 from odetam.field import DetaField
 
 
@@ -453,3 +453,9 @@ async def test_delete_no_key(captains, Captain):
     Captain._db.delete.return_value = future_with(None)
     with pytest.raises(DetaError):
         await captains[1].delete()
+
+
+@pytest.mark.asyncio
+async def test_none_as_key_raises(Basic):
+    with pytest.raises(InvalidKey):
+        await Basic.get(None)

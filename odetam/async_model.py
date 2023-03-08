@@ -2,7 +2,7 @@ from typing import Union
 
 from deta import AsyncBase
 from deta.base import FetchResponse
-from odetam.exceptions import DetaError
+from odetam.exceptions import DetaError, InvalidKey
 from odetam.model import BaseDetaModel, DetaModelMetaClass, handle_db_property
 from odetam.query import DetaQueryList, DetaQueryStatement, DetaQuery
 
@@ -23,6 +23,9 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
 
         :raises ItemNotFound: No matching item was found
         """
+        if key is None:
+            raise InvalidKey("key cannot be None")
+
         item = await cls.__db__.get(key)
         return cls._return_item_or_raise(item)
 

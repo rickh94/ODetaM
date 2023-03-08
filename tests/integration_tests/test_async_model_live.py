@@ -191,12 +191,11 @@ async def test_async_datetime_query(
 @pytest.mark.asyncio
 async def test_async_delete_key(IntegrationAsyncBasic):
     item = IntegrationAsyncBasic(name="test")
-    old_key = item.key
     await item.save()
     await IntegrationAsyncBasic.delete_key(item.key)
 
     with pytest.raises(ItemNotFound):
-        await IntegrationAsyncBasic.get(old_key)
+        await IntegrationAsyncBasic.get(item.key)
 
 
 @pytest.mark.skipif(

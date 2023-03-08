@@ -9,7 +9,7 @@ import pytest
 from pydantic import EmailStr
 
 from odetam import DetaModel
-from odetam.exceptions import ItemNotFound, DetaError
+from odetam.exceptions import ItemNotFound, DetaError, InvalidKey
 from odetam.field import DetaField
 
 
@@ -463,3 +463,8 @@ def test_falsy_values_deserialize_correctly(Falsy):
 
     assert falsy.name is not None
     assert falsy.is_true is not None
+
+
+def test_passing_none_as_key_raises(Basic):
+    with pytest.raises(InvalidKey):
+        Basic.get(None)
