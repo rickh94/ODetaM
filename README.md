@@ -72,7 +72,7 @@ class Captain(DetaModel):
 kirk.save()
 
 # update the object
-    kirk.ships.append("Enterprise-A")
+kirk.ships.append("Enterprise-A")
 
 # save again, this will be an update
 kirk.save()
@@ -95,7 +95,7 @@ Captain.get_all()
 #     ),
 # ]
 
-    Captain.get("key1")
+Captain.get("key1")
 # Captain(
 #     name="James T. Kirk", 
 #     joined=datetime.date(2252, 01, 01), 
@@ -103,7 +103,7 @@ Captain.get_all()
 #     key="key1",
 # )
 
-    Captain.query(Captain.name == "James T. Kirk")
+Captain.query(Captain.name == "James T. Kirk")
 # Captain(
 #     name="James T. Kirk", 
 #     joined=datetime.date(2252, 01, 01), 
@@ -111,14 +111,14 @@ Captain.get_all()
 #     key="key1",
 # )
 
-    Captain.query(Captain.ships.contains("Defiant"))
+Captain.query(Captain.ships.contains("Defiant"))
 # Captain(
 #     name="Benjamin Sisko",
 #     joined=datetime.date(2350, 01, 01),
 #     ships=["Deep Space 9", "Defiant"],
 # )
 
-    Captain.query(Captain.name.prefix("Ben"))
+Captain.query(Captain.name.prefix("Ben"))
 # Captain(
 #     name="Benjamin Sisko",
 #     joined=datetime.date(2350, 01, 01),
@@ -148,7 +148,7 @@ Captain.put_many([kirk, sisko])
 #     ),
 # ]
 
-    ```
+```
 
 ## Save
 
