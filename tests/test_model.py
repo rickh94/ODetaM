@@ -63,6 +63,18 @@ def Event(monkeypatch):
 
 
 @pytest.fixture
+def Falsy(monkeypatch):
+    monkeypatch.setenv("PROJECT_KEY", "123_123")
+
+    class _Falsy(DetaModel):
+        name: str
+        is_true: bool
+
+    _Falsy.db = mock.MagicMock()
+    return _Falsy
+
+
+@pytest.fixture
 def captains(Captain):
     return [
         Captain(
@@ -333,7 +345,8 @@ def test_save_converts_time(Appointment):
     doctor = Appointment(name="Doctor", at=at)
     doctor.save()
 
-    Appointment._db.put.assert_called_with({"name": "Doctor", "at": 121101000012})
+    Appointment._db.put.assert_called_with(
+        {"name": "Doctor", "at": 121101000012})
     assert doctor.key == "key8"
 
 
@@ -404,7 +417,8 @@ def test_serialize_optional_attribute(HasOptional):
 
 
 def test_serialize_weird_attributes(UnrulyModel):
-    unruly = UnrulyModel(email="test@example.com", ips=["192.168.1.1", "10.0.1.1"])
+    unruly = UnrulyModel(email="test@example.com",
+                         ips=["192.168.1.1", "10.0.1.1"])
 
     assert unruly._serialize() == {
         "name": None,
@@ -416,7 +430,7 @@ def test_serialize_weird_attributes(UnrulyModel):
 def test_deserialize_optional_attribute(HasOptional):
     thing = HasOptional._deserialize({})
 
-    print(HasOptional.name.field.type_)
+    # print(HasOptional.name.field.type_)
 
     assert thing.name is None
 
@@ -436,3 +450,25 @@ def test_deserialize_weird_attributes(UnrulyModel):
         ipaddress.IPv4Address("192.168.1.1"),
         ipaddress.IPv4Address("10.0.1.1"),
     ]
+
+
+def test_falsy_values_serialize_correctly(Falsy):
+    falsy = Falsy(name='', is_true=False)
+
+    assert falsy._serialize() == {
+        "name": "",
+        "is_true": False
+    }
+
+
+def test_falsy_values_deserialize_correctly(Falsy):
+    data = {
+        "name": "",
+        "is_true": False
+    }
+
+    falsy = Falsy._deserialize(data)
+
+    assert falsy.name is not None
+    assert falsy.is_true is not None
+

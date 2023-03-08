@@ -63,6 +63,16 @@ def Event(monkeypatch):
 
 
 @pytest.fixture
+def FakeResult():
+    class _FakeResult:
+        def __init__(self, items, last=None):
+            self.items = items
+            self.last = last
+
+    return _FakeResult
+
+
+@pytest.fixture
 def captains(Captain):
     return [
         Captain(
@@ -155,13 +165,17 @@ async def test_async_deta_meta_model_class_creates_db_lazily(monkeypatch):
     monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
     db_mock = mock.MagicMock()
     db_instance_mock = mock.MagicMock()
-    db_mock.return_value = db_instance_mock    
+    db_instance_mock.put.return_value = future_with({
+        "key": "testkey",
+        "name": "object_example"
+    })
+    db_mock.return_value = db_instance_mock
     monkeypatch.setattr("odetam.async_model.AsyncBase", db_mock)
 
     class ObjectExample(AsyncDetaModel):
         name: str
 
-    ObjectExample(name="hi").save()
+    await ObjectExample(name="hi").save()
 
     db_mock.assert_called_with("object_example")
     assert ObjectExample.__db_name__ == "object_example"
@@ -208,11 +222,11 @@ async def test_async_get_not_found_raises_error(Captain):
 
 
 @pytest.mark.asyncio
-async def test_async_get_all(Captain, captains_with_keys_list):
+async def test_async_get_all(Captain, captains_with_keys_list, FakeResult):
     async def _mock_query():
-        return {"items": captains_with_keys_list}
+        return FakeResult(captains_with_keys_list)
 
-    Captain._db.query = _mock_query
+    Captain._db.fetch = _mock_query
 
     records = await Captain.get_all()
     assert len(records) == len(captains_with_keys_list)
@@ -221,14 +235,16 @@ async def test_async_get_all(Captain, captains_with_keys_list):
     for captain in captains_with_keys_list:
         assert Captain._deserialize(captain) in records
 
+# FIXME: test_async_get_all does NOT test pagination of very large sets.
+
 
 @pytest.mark.asyncio
-async def test_async_query(Captain, captains_with_keys_list):
-    async def _mock_async_query(query_statement):
-        assert query_statement[0]["example"] == "query"
-        return {"items": captains_with_keys_list[1:2]}
+async def test_async_query(Captain, captains_with_keys_list, FakeResult):
+    async def _mock_async_fetch(query_statement):
+        assert query_statement["example"] == "query"
+        return FakeResult(captains_with_keys_list[1:2])
 
-    Captain._db.query = _mock_async_query
+    Captain._db.fetch = _mock_async_fetch
     mock_query_statement = mock.MagicMock()
     mock_query_statement.as_query.return_value = {"example": "query"}
 
@@ -251,12 +267,12 @@ async def test_async_delete_key(Captain):
 async def test_async_put_many(
     Captain, captains_list, captains_with_keys_list, captains
 ):
-    Captain._db.put.return_value = future_with(
+    Captain._db.put_many.return_value = future_with(
         put_returns_items(captains_with_keys_list)
     )
     results = await Captain.put_many(captains)
 
-    Captain._db.put.assert_called_with(captains_list)
+    Captain._db.put_many.assert_called_with(captains_list)
 
     assert len(results) == len(captains)
     for captain in captains_with_keys_list:
@@ -271,7 +287,7 @@ async def test_async_put_more_than_25(Captain, make_bunch_of_random_captains):
     captains, captain_data, captain_data_with_keys = make_bunch_of_random_captains(
         Captain, 52
     )
-    Captain._db.put.side_effect = [
+    Captain._db.put_many.side_effect = [
         future_with({"processed": {"items": captain_data_with_keys[0:25]}}),
         future_with({"processed": {"items": captain_data_with_keys[25:50]}}),
         future_with({"processed": {"items": captain_data_with_keys[50:]}}),
@@ -279,11 +295,11 @@ async def test_async_put_more_than_25(Captain, make_bunch_of_random_captains):
     results = await Captain.put_many(captains)
 
     # Two batches of 25, and the remaining records
-    assert Captain._db.put.call_count == 3
+    assert Captain._db.put_many.call_count == 3
     # put_many should have been called with each of the batches
-    Captain._db.put.assert_any_call(captain_data[0:25])
-    Captain._db.put.assert_any_call(captain_data[25:50])
-    Captain._db.put.assert_any_call(captain_data[50:])
+    Captain._db.put_many.assert_any_call(captain_data[0:25])
+    Captain._db.put_many.assert_any_call(captain_data[25:50])
+    Captain._db.put_many.assert_any_call(captain_data[50:])
 
     # resulting data should have been flattened and serialized, and have keys
     # added from database result
@@ -295,11 +311,12 @@ async def test_async_put_more_than_25(Captain, make_bunch_of_random_captains):
 async def test_async_basic_save(Basic):
     Basic._db = mock.MagicMock()
     data = {"name": "test"}
-    Basic._db.put.return_value = future_with(put_returns_items({**data, "key": "key1"}))
+    Basic._db.put.return_value = future_with(
+        {**data, "key": "key1"})
     new_thing = Basic(name="test")
     await new_thing.save()
 
-    Basic._db.put.assert_called_with([data])
+    Basic._db.put.assert_called_with(data)
     assert new_thing.key == "key1"
 
 
@@ -326,13 +343,11 @@ async def test_async_get_converts_date_back(Captain):
 @pytest.mark.asyncio
 async def test_async_save_converts_date(Captain):
     data = {"name": "Saru", "joined": 22490101, "ships": ["Discovery"]}
-    Captain._db.put.return_value = future_with(
-        put_returns_items({**data, "key": "key8"})
-    )
+    Captain._db.put.return_value = future_with({**data, "key": "key8"})
     saru = Captain(name=data["name"], ships=["Discovery"], joined="2249-01-01")
     await saru.save()
 
-    Captain._db.put.assert_called_with([data])
+    Captain._db.put.assert_called_with(data)
     assert saru.key == "key8"
 
 
@@ -340,18 +355,17 @@ async def test_async_save_converts_date(Captain):
 async def test_async_save_converts_datetime(Event):
     at = datetime.datetime(2021, 8, 1, 20, 26, 51, 737609)
     Event._db.put.return_value = future_with(
-        put_returns_items(
-            {
-                "at": at.timestamp(),
-                "name": "Concert",
-                "key": "key8",
-            }
-        )
+        {
+            "at": at.timestamp(),
+            "name": "Concert",
+            "key": "key8",
+        }
     )
     concert = Event(name="Concert", at=at)
     await concert.save()
 
-    Event._db.put.assert_called_with([{"name": "Concert", "at": at.timestamp()}])
+    Event._db.put.assert_called_with(
+        {"name": "Concert", "at": at.timestamp()})
     assert concert.key == "key8"
 
 
@@ -359,18 +373,17 @@ async def test_async_save_converts_datetime(Event):
 async def test_async_save_converts_time(Appointment):
     at = datetime.time(12, 11, 1, 12)
     Appointment._db.put.return_value = future_with(
-        put_returns_items(
-            {
-                "at": 1211101000012,
-                "name": "Concert",
-                "key": "key8",
-            }
-        )
+        {
+            "at": 1211101000012,
+            "name": "Concert",
+            "key": "key8",
+        }
     )
     doctor = Appointment(name="Doctor", at=at)
     await doctor.save()
 
-    Appointment._db.put.assert_called_with([{"name": "Doctor", "at": 121101000012}])
+    Appointment._db.put.assert_called_with(
+        {"name": "Doctor", "at": 121101000012})
     assert doctor.key == "key8"
 
 
@@ -419,12 +432,12 @@ async def test_async_save_existing(Captain):
         "ships": ["Voyager"],
         "key": "key25",
     }
-    Captain._db.put.return_value = future_with(put_returns_items(data))
+    Captain._db.put.return_value = future_with(data)
     janeway = Captain(
         name=data["name"], ships=data["ships"], key=data["key"], joined="2360-01-01"
     )
     await janeway.save()
-    Captain._db.put.assert_called_with([data])
+    Captain._db.put.assert_called_with(data)
     assert janeway.key == "key25"
 
 
