@@ -126,7 +126,7 @@ Captain.query(Captain.name.prefix("Ben"))
 # )
 
 kirk.delete()
-    Captain.delete_key("key2")
+Captain.delete_key("key2")
 
 Captain.get_all()
 # []
