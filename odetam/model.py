@@ -1,20 +1,19 @@
 import datetime
-import os
 import re
-from typing import Optional, Union, List
+from typing import Any, Callable, Container, Dict, List, Optional, Union
 
 import pydantic
 import ujson
 from deta import Base
-from deta.base import FetchResponse
-from pydantic import Field, BaseModel, ValidationError
+from deta.base import FetchResponse, _Base
+from pydantic import BaseModel, Field, ValidationError
+from typing_extensions import Self
 
-from odetam.exceptions import DetaError, ItemNotFound, InvalidKey
+from odetam.exceptions import DetaError, InvalidKey, ItemNotFound
 from odetam.field import DetaField
-from odetam.query import DetaQuery, DetaQueryStatement, DetaQueryList
+from odetam.query import DetaQuery, DetaQueryList, DetaQueryStatement
 
-
-DETA_BASIC_TYPES = [dict, list, str, int, float, bool]
+DETA_BASIC_TYPES = [Dict[str, Any], List[Any], str, int, float, bool]
 DETA_OPTIONAL_TYPES = [Optional[type_] for type_ in DETA_BASIC_TYPES]
 DETA_BASIC_LIST_TYPES = [
     List[type_] for type_ in DETA_BASIC_TYPES + DETA_OPTIONAL_TYPES
@@ -22,7 +21,7 @@ DETA_BASIC_LIST_TYPES = [
 DETA_TYPES = DETA_BASIC_TYPES + DETA_OPTIONAL_TYPES + DETA_BASIC_LIST_TYPES
 
 
-def handle_db_property(cls, base_class: Base):
+def handle_db_property(cls: "BaseDetaModel", base_class: Callable[[str], _Base]) -> _Base:
     if cls._db:
         return cls._db
 
@@ -49,15 +48,18 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
 
 
 class BaseDetaModel(BaseModel):
-    __db__ = None
+    _db: _Base
+    __db__ = Optional[_Base]
+
     key: Optional[str] = Field(
         None, title="Key", description="Primary key in the database"
     )
 
-    def _serialize(self, exclude=None):
+    def _serialize(self, exclude: Optional[Container[str]] = None) -> Dict[str, Any]:
         if not exclude:
             exclude = []
-        as_dict = {}
+
+        as_dict: Dict[str, Any] = {}
         for field_name, field in self.__class__.__fields__.items():
             if field_name == "key" and not self.key:
                 continue
@@ -80,11 +82,12 @@ class BaseDetaModel(BaseModel):
                 as_dict[field_name] = ujson.loads(self.json(include={field_name}))[
                     field_name
                 ]
+
         return as_dict
 
     @classmethod
-    def _deserialize(cls, data):
-        as_dict = {}
+    def _deserialize(cls, data: Dict[str, Any]) -> Self:
+        as_dict: Dict[str, Any] = {}
         for field_name, field in cls.__fields__.items():
             if data.get(field_name) is None:
                 continue
@@ -101,14 +104,19 @@ class BaseDetaModel(BaseModel):
                     str(data[field_name]), "%H%M%S%f"
                 ).time()
             else:
-                try:
-                    as_dict[field_name] = ujson.loads(data.get(field_name))
-                except (TypeError, ValueError):
-                    as_dict[field_name] = data.get(field_name, None)
+                value = data.get(field_name)
+                if value is not None:
+                    try:
+                        as_dict[field_name] = ujson.loads(value)
+                    except (TypeError, ValueError):
+                        as_dict[field_name] = value
+                else:
+                    as_dict[field_name] = None
+
         return cls.parse_obj(as_dict)
 
     @classmethod
-    def _return_item_or_raise(cls, item):
+    def _return_item_or_raise(cls, item: Optional[Dict[str, Any]]) -> Self:
         if item is None or item.get("key") == "None":
             raise ItemNotFound("Could not find item matching that key")
         try:
@@ -119,7 +127,7 @@ class BaseDetaModel(BaseModel):
 
 class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
     @classmethod
-    def get(cls, key):
+    def get(cls, key: str) -> Self:
         """
         Get a single instance
         :param key: Deta database key
@@ -129,14 +137,15 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         """
         if key is None:
             raise InvalidKey("key cannot be None")
-        item = cls.__db__.get(key)
+
+        item: Dict[str, Any] = cls.__db__.get(key)
         return cls._return_item_or_raise(item)
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls) -> List[Self]:
         """Get all the records from the database"""
         response: FetchResponse = cls.__db__.fetch()
-        records = response.items
+        records: List[Dict[str, Any]] = response.items
         while response.last:
             response = cls.__db__.fetch(last=response.last)
             records += response.items
@@ -146,10 +155,10 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
     @classmethod
     def query(
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
-    ):
+    ) -> List[Self]:
         """Get items from database based on the query."""
         response: FetchResponse = cls.__db__.fetch(query_statement.as_query())
-        records = response.items
+        records: List[Dict[str, Any]] = response.items
         while response.last:
             response = cls.__db__.fetch(query_statement.as_query(), last=response.last)
             records += response.items
@@ -157,21 +166,21 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         return [cls._deserialize(item) for item in records]
 
     @classmethod
-    def delete_key(cls, key):
+    def delete_key(cls, key: str):
         """Delete an item based on the key"""
         cls.__db__.delete(key)
 
     @classmethod
-    def put_many(cls, items):
+    def put_many(cls, items: List[Self]) -> List[Self]:
         """Put multiple instances at once
 
         :param items: List of pydantic objects to put in the database
         :returns: List of items successfully added, serialized with pydantic
         """
         records = []
-        processed = []
+        processed: List[Dict[str, Any]] = []
         for item in items:
-            exclude = set()
+            exclude: set[str] = set()
             if item.key is None:
                 exclude = {"key"}
             # noinspection PyProtectedMember
@@ -183,11 +192,12 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         if records:
             result = cls.__db__.put_many(records)
             processed.extend(result["processed"]["items"])
-        return [cls._deserialize(rec) for rec in processed]
+
+        return [cls._deserialize(record) for record in processed]
 
     @classmethod
-    def _db_put(cls, data):
-        return cls.__db__.put(data)
+    def _db_put(cls, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return cls.__db__.put(data)  # type: ignore
 
     def save(self):
         """Saves the record to the database. Behaves as upsert, will create
