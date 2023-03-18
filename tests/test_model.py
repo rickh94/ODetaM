@@ -201,6 +201,23 @@ def test_get_not_found_raises_error(Captain):
         Captain.get("key1")
 
 
+def test_get_or_none_existed_item(Basic):
+    Basic._db.get.return_value = {"name": "test", "key": "key2"}
+    new_thing = Basic.get_or_none(key="key2")
+
+    Basic._db.get.assert_called_with("key2")
+    assert new_thing.key == "key2"
+    assert new_thing.name == "test"
+
+
+def test_get_or_none_not_existed_key(Basic):
+    Basic._db.get.return_value = None
+    new_thing = Basic.get_or_none(key="key2")
+
+    Basic._db.get.assert_called_with("key2")
+    assert new_thing == None
+
+
 def test_get_all(Captain, captains_with_keys_list):
     def _mock_fetch():
         return deta.base.FetchResponse(

@@ -1,10 +1,10 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from deta import AsyncBase
 from deta.base import FetchResponse
 from typing_extensions import Self
 
-from odetam.exceptions import DetaError, InvalidKey
+from odetam.exceptions import DetaError, InvalidKey, ItemNotFound
 from odetam.model import BaseDetaModel, DetaModelMetaClass, handle_db_property
 from odetam.query import DetaQuery, DetaQueryList, DetaQueryStatement
 
@@ -31,6 +31,14 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         item: Dict[str, Any] = await cls.__db__.get(key)
         return cls._return_item_or_raise(item)
 
+    @classmethod
+    async def get_or_none(cls, key: str) -> Optional[Self]:
+        """Try to get item by key or return None if item not found"""
+        try:
+            return await cls.get(key)
+        except ItemNotFound:
+            return None
+        
     @classmethod
     async def get_all(cls) -> List[Self]:
         """Get all the records from the database"""
