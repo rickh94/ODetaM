@@ -4,7 +4,7 @@ from typing import Any, Callable, Container, Dict, List, Optional, Union
 
 import pydantic
 import ujson
-from deta import Base
+from deta import Base, Deta
 from deta.base import FetchResponse, _Base
 from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import Self
@@ -44,11 +44,14 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
 
     @property
     def __db__(cls):
+        if getattr(cls.Config, "deta_key", None) is not None:
+            deta = Deta(cls.Config.deta_key)
+            return handle_db_property(cls, deta.Base)
+        
         return handle_db_property(cls, Base)
 
 
 class BaseDetaModel(BaseModel):
-    _db: _Base
     __db__ = Optional[_Base]
 
     key: Optional[str] = Field(

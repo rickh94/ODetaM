@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 
-from deta import AsyncBase
+from deta import AsyncBase, Deta
 from deta.base import FetchResponse
 from typing_extensions import Self
 
@@ -12,6 +12,10 @@ from odetam.query import DetaQuery, DetaQueryList, DetaQueryStatement
 class AsyncDetaModelMetaClass(DetaModelMetaClass):
     @property
     def __db__(cls):
+        if getattr(cls.Config, "deta_key", None) is not None:
+            deta = Deta(cls.Config.deta_key)
+            return handle_db_property(cls, deta.AsyncBase)
+        
         return handle_db_property(cls, AsyncBase)
 
 
