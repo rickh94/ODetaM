@@ -55,7 +55,7 @@ class BaseDetaModel(BaseModel):
     __db__ = Optional[_Base]
 
     key: Optional[str] = Field(
-        None, title="Key", description="Primary key in the database"
+        default=None, title="Key", description="Primary key in the database"
     )
 
     def _serialize(self, exclude: Optional[Container[str]] = None) -> Dict[str, Any]:
