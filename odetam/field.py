@@ -24,7 +24,9 @@ NON_STR_TYPES = [
 ]
 
 
-def _handle_datetimes(possible_datetime: Union[datetime.datetime, datetime.date, datetime.time, Any]) -> Any:
+def _handle_datetimes(
+    possible_datetime: Union[datetime.datetime, datetime.date, datetime.time, Any]
+) -> Any:
     if isinstance(possible_datetime, datetime.datetime):
         return possible_datetime.timestamp()
     elif isinstance(possible_datetime, datetime.date):

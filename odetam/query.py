@@ -10,12 +10,16 @@ class DetaQuery:
         self.condition = condition
         self.value = value
 
-    def __and__(self, other: Union["DetaQuery", "DetaQueryStatement"]) -> "DetaQueryStatement":
+    def __and__(
+        self, other: Union["DetaQuery", "DetaQueryStatement"]
+    ) -> "DetaQueryStatement":
         if isinstance(other, DetaQueryStatement):
             return other & self
         return DetaQueryStatement([self, other])
 
-    def __or__(self, other: Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]) -> "DetaQueryList":
+    def __or__(
+        self, other: Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]
+    ) -> "DetaQueryList":
         if isinstance(other, DetaQueryList):
             return other | self
         return DetaQueryList(conditions=[self, other])
@@ -25,10 +29,15 @@ class DetaQuery:
 
 
 class DetaQueryList:
-    def __init__(self, conditions: List[Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]]):
+    def __init__(
+        self,
+        conditions: List[Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]],
+    ):
         self.conditions = conditions
 
-    def __or__(self, other: Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]) -> Self:
+    def __or__(
+        self, other: Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]
+    ) -> Self:
         if isinstance(other, DetaQueryList):
             self.conditions.extend(other.conditions)
         else:
@@ -52,7 +61,9 @@ class DetaQueryStatement:
             raise InvalidDetaQuery("Incorrect and/or nesting")
         return self
 
-    def __or__(self, other: Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]) -> "DetaQueryList":
+    def __or__(
+        self, other: Union["DetaQuery", "DetaQueryStatement", "DetaQueryList"]
+    ) -> "DetaQueryList":
         if isinstance(other, DetaQueryList):
             other.conditions.append(self)
             return other

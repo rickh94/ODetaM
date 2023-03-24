@@ -15,7 +15,7 @@ class AsyncDetaModelMetaClass(DetaModelMetaClass):
         if getattr(cls.Config, "deta_key", None) is not None:
             deta = Deta(cls.Config.deta_key)
             return handle_db_property(cls, deta.AsyncBase)
-        
+
         return handle_db_property(cls, AsyncBase)
 
 
@@ -42,7 +42,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
             return await cls.get(key)
         except ItemNotFound:
             return None
-        
+
     @classmethod
     async def get_all(cls) -> List[Self]:
         """Get all the records from the database"""
@@ -96,7 +96,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         if records:
             result = await cls.__db__.put_many(records)
             processed.extend(result["processed"]["items"])
-            
+
         return [cls._deserialize(record) for record in processed]
 
     @classmethod

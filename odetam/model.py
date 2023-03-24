@@ -21,7 +21,9 @@ DETA_BASIC_LIST_TYPES = [
 DETA_TYPES = DETA_BASIC_TYPES + DETA_OPTIONAL_TYPES + DETA_BASIC_LIST_TYPES
 
 
-def handle_db_property(cls: "BaseDetaModel", base_class: Callable[[str], _Base]) -> _Base:
+def handle_db_property(
+    cls: "BaseDetaModel", base_class: Callable[[str], _Base]
+) -> _Base:
     if cls._db:
         return cls._db
 
@@ -47,7 +49,7 @@ class DetaModelMetaClass(pydantic.main.ModelMetaclass):
         if getattr(cls.Config, "deta_key", None) is not None:
             deta = Deta(cls.Config.deta_key)
             return handle_db_property(cls, deta.Base)
-        
+
         return handle_db_property(cls, Base)
 
 
@@ -64,14 +66,13 @@ class BaseDetaModel(BaseModel):
 
         as_dict: Dict[str, Any] = {}
         for field_name, field in self.__class__.__fields__.items():
-            if field_name == "key" and not self.key:
-                continue
             if field_name in exclude:
                 continue
-            if getattr(self, field_name, None) is None:
-                as_dict[field_name] = None
+            elif field_name == "key" and not self.key:
                 continue
-            if field.type_ in DETA_TYPES:
+            elif getattr(self, field_name, None) is None:
+                as_dict[field_name] = None
+            elif field.type_ in DETA_TYPES:
                 as_dict[field_name] = getattr(self, field_name)
             elif field.type_ == datetime.datetime:
                 as_dict[field_name] = getattr(self, field_name).timestamp()
@@ -93,8 +94,8 @@ class BaseDetaModel(BaseModel):
         as_dict: Dict[str, Any] = {}
         for field_name, field in cls.__fields__.items():
             if data.get(field_name) is None:
-                continue
-            if field.type_ in DETA_TYPES:
+                as_dict[field_name] = None
+            elif field.type_ in DETA_TYPES:
                 as_dict[field_name] = data[field_name]
             elif field.type_ == datetime.datetime:
                 as_dict[field_name] = datetime.datetime.fromtimestamp(data[field_name])
@@ -108,13 +109,11 @@ class BaseDetaModel(BaseModel):
                 ).time()
             else:
                 value = data.get(field_name)
-                if value is not None:
-                    try:
-                        as_dict[field_name] = ujson.loads(value)
-                    except (TypeError, ValueError):
-                        as_dict[field_name] = value
-                else:
-                    as_dict[field_name] = None
+                # value is guaranteed to not be none above
+                try:
+                    as_dict[field_name] = ujson.loads(value)
+                except (TypeError, ValueError):
+                    as_dict[field_name] = value
 
         return cls.parse_obj(as_dict)
 

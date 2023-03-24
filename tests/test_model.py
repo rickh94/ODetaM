@@ -215,7 +215,7 @@ def test_get_or_none_not_existed_key(Basic):
     new_thing = Basic.get_or_none(key="key2")
 
     Basic._db.get.assert_called_with("key2")
-    assert new_thing == None
+    assert new_thing is None
 
 
 def test_get_all(Captain, captains_with_keys_list):
