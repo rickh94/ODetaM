@@ -221,6 +221,25 @@ async def test_async_get_not_found_raises_error(Captain):
 
 
 @pytest.mark.asyncio
+async def test_get_or_none_existed_item(Basic):
+    Basic._db.get.return_value = future_with({"name": "test", "key": "key2"})
+    new_thing = await Basic.get_or_none(key="key2")
+
+    Basic._db.get.assert_called_with("key2")
+    assert new_thing.key == "key2"
+    assert new_thing.name == "test"
+
+
+@pytest.mark.asyncio
+async def test_get_or_none_not_existed_key(Basic):
+    Basic._db.get.return_value = future_with(None)
+    new_thing = await Basic.get_or_none(key="key2")
+
+    Basic._db.get.assert_called_with("key2")
+    assert new_thing == None
+
+
+@pytest.mark.asyncio
 async def test_async_get_all(Captain, captains_with_keys_list, FakeResult):
     async def _mock_query():
         return FakeResult(captains_with_keys_list)

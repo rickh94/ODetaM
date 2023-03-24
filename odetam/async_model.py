@@ -1,21 +1,27 @@
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
-from deta import AsyncBase
+from deta import AsyncBase, Deta
 from deta.base import FetchResponse
-from odetam.exceptions import DetaError, InvalidKey
+from typing_extensions import Self
+
+from odetam.exceptions import DetaError, InvalidKey, ItemNotFound
 from odetam.model import BaseDetaModel, DetaModelMetaClass, handle_db_property
-from odetam.query import DetaQueryList, DetaQueryStatement, DetaQuery
+from odetam.query import DetaQuery, DetaQueryList, DetaQueryStatement
 
 
 class AsyncDetaModelMetaClass(DetaModelMetaClass):
     @property
     def __db__(cls):
+        if getattr(cls.Config, "deta_key", None) is not None:
+            deta = Deta(cls.Config.deta_key)
+            return handle_db_property(cls, deta.AsyncBase)
+        
         return handle_db_property(cls, AsyncBase)
 
 
 class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     @classmethod
-    async def get(cls, key):
+    async def get(cls, key: str) -> Self:
         """
         Get a single instance
         :param key: Deta database key
@@ -26,14 +32,22 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         if key is None:
             raise InvalidKey("key cannot be None")
 
-        item = await cls.__db__.get(key)
+        item: Dict[str, Any] = await cls.__db__.get(key)
         return cls._return_item_or_raise(item)
 
     @classmethod
-    async def get_all(cls):
+    async def get_or_none(cls, key: str) -> Optional[Self]:
+        """Try to get item by key or return None if item not found"""
+        try:
+            return await cls.get(key)
+        except ItemNotFound:
+            return None
+        
+    @classmethod
+    async def get_all(cls) -> List[Self]:
         """Get all the records from the database"""
         response: FetchResponse = await cls.__db__.fetch()
-        records = response.items
+        records: List[Dict[str, Any]] = response.items
         while response.last:
             response = await cls.__db__.fetch(last=response.last)
             records += response.items
@@ -43,10 +57,10 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     @classmethod
     async def query(
         cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
-    ):
+    ) -> List[Self]:
         """Get items from database based on the query."""
         response: FetchResponse = await cls.__db__.fetch(query_statement.as_query())
-        records = response.items
+        records: List[Dict[str, Any]] = response.items
         while response.last:
             response = await cls.__db__.fetch(
                 query_statement.as_query(), last=response.last
@@ -56,19 +70,19 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         return [cls._deserialize(item) for item in records]
 
     @classmethod
-    async def delete_key(cls, key):
+    async def delete_key(cls, key: str):
         """Delete an item based on the key"""
         await cls.__db__.delete(key)
 
     @classmethod
-    async def put_many(cls, items):
+    async def put_many(cls, items: List[Self]):
         """Put multiple instances at once
 
         :param items: List of pydantic objects to put in the database
         :returns: List of items successfully added, serialized with pydantic
         """
         records = []
-        processed = []
+        processed: List[Dict[str, Any]] = []
         for item in items:
             exclude = set()
             if item.key is None:
@@ -82,10 +96,11 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         if records:
             result = await cls.__db__.put_many(records)
             processed.extend(result["processed"]["items"])
-        return [cls._deserialize(rec) for rec in processed]
+            
+        return [cls._deserialize(record) for record in processed]
 
     @classmethod
-    async def _db_put(cls, data):
+    async def _db_put(cls, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return await cls.__db__.put(data)
 
     async def save(self):
