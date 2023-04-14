@@ -6,7 +6,8 @@ from unittest import mock
 
 import deta
 import pytest
-from pydantic import EmailStr
+from pydantic import EmailStr, Field
+import pydantic
 
 from odetam import DetaModel
 from odetam.exceptions import ItemNotFound, DetaError, InvalidKey
@@ -73,6 +74,16 @@ def Falsy(monkeypatch):
     _Falsy.db = mock.MagicMock()
     return _Falsy
 
+@pytest.fixture
+def WithDefaults(monkeypatch):
+    monkeypatch.setenv("DETA_PROJECT_KEY", "123_123")
+
+    class _WithDefaults(DetaModel):
+        name: str = Field("Test")
+        age: int = Field(...)
+
+    _WithDefaults._db = mock.MagicMock()
+    return _WithDefaults
 
 @pytest.fixture
 def captains(Captain):
@@ -485,3 +496,15 @@ def test_falsy_values_deserialize_correctly(Falsy):
 def test_passing_none_as_key_raises(Basic):
     with pytest.raises(InvalidKey):
         Basic.get(None)
+
+
+def test_missing_values_deserialize_to_default(WithDefaults):
+    data = {"age": 42}
+    wd = WithDefaults._deserialize(data)
+
+    assert wd.name == "Test"
+    assert wd.age == 42
+
+def test_missing_values_without_default_error(WithDefaults):
+    with pytest.raises(pydantic.error_wrappers.ValidationError):
+        WithDefaults._deserialize({})

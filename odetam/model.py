@@ -93,7 +93,9 @@ class BaseDetaModel(BaseModel):
     def _deserialize(cls, data: Dict[str, Any]) -> Self:
         as_dict: Dict[str, Any] = {}
         for field_name, field in cls.__fields__.items():
-            if data.get(field_name) is None:
+            if field_name not in data:
+                continue
+            elif data.get(field_name) is None:
                 as_dict[field_name] = None
             elif field.type_ in DETA_TYPES:
                 as_dict[field_name] = data[field_name]
