@@ -70,12 +70,12 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         return [cls._deserialize(item) for item in records]
 
     @classmethod
-    async def delete_key(cls, key: str):
+    async def delete_key(cls, key: str) -> None:
         """Delete an item based on the key"""
         await cls.__db__.delete(key)
 
     @classmethod
-    async def put_many(cls, items: List[Self]):
+    async def put_many(cls, items: List[Self]) -> List[Self]:
         """Put multiple instances at once
 
         :param items: List of pydantic objects to put in the database
@@ -103,7 +103,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     async def _db_put(cls, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return await cls.__db__.put(data)
 
-    async def save(self):
+    async def save(self) -> None:
         """Saves the record to the database. Behaves as upsert, will create
         if not present. Database key will then be set on the object."""
         # exclude = set()
@@ -114,7 +114,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         saved = await self._db_put(self._serialize())
         self.key = saved["key"]
 
-    async def delete(self):
+    async def delete(self) -> None:
         """Delete the open object from the database. The object will still exist in
         python, but will be deleted from the database and the key attribute will be
         set to None."""

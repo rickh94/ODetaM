@@ -178,7 +178,7 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         return [cls._deserialize(item) for item in records]
 
     @classmethod
-    def delete_key(cls, key: str):
+    def delete_key(cls, key: str) -> None:
         """Delete an item based on the key"""
         cls.__db__.delete(key)
 
@@ -211,7 +211,7 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
     def _db_put(cls, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return cls.__db__.put(data)  # type: ignore
 
-    def save(self):
+    def save(self) -> None:
         """Saves the record to the database. Behaves as upsert, will create
         if not present. Database key will then be set on the object."""
         # exclude = set()
@@ -222,7 +222,7 @@ class DetaModel(BaseDetaModel, metaclass=DetaModelMetaClass):
         saved = self._db_put(self._serialize())
         self.key = saved["key"]
 
-    def delete(self):
+    def delete(self) -> None:
         """Delete the open object from the database. The object will still exist in
         python, but will be deleted from the database and the key attribute will be
         set to None."""
