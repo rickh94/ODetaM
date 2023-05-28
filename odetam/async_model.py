@@ -1,8 +1,7 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 from deta import AsyncBase, Deta
 from deta.base import FetchResponse
-from typing_extensions import Self
 
 from odetam.exceptions import DetaError, InvalidKey, ItemNotFound
 from odetam.model import BaseDetaModel, DetaModelMetaClass, handle_db_property
@@ -19,9 +18,12 @@ class AsyncDetaModelMetaClass(DetaModelMetaClass):
         return handle_db_property(cls, AsyncBase)
 
 
+T = TypeVar("T", bound="AsyncDetaModel")
+
+
 class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     @classmethod
-    async def get(cls, key: str) -> Self:
+    async def get(cls: Type[T], key: str) -> T:
         """
         Get a single instance
         :param key: Deta database key
@@ -36,7 +38,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         return cls._return_item_or_raise(item)
 
     @classmethod
-    async def get_or_none(cls, key: str) -> Optional[Self]:
+    async def get_or_none(cls: Type[T], key: str) -> Optional[T]:
         """Try to get item by key or return None if item not found"""
         try:
             return await cls.get(key)
@@ -44,7 +46,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
             return None
 
     @classmethod
-    async def get_all(cls) -> List[Self]:
+    async def get_all(cls: Type[T]) -> List[T]:
         """Get all the records from the database"""
         response: FetchResponse = await cls.__db__.fetch()
         records: List[Dict[str, Any]] = response.items
@@ -56,8 +58,8 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
 
     @classmethod
     async def query(
-        cls, query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
-    ) -> List[Self]:
+        cls: Type[T], query_statement: Union[DetaQuery, DetaQueryStatement, DetaQueryList]
+    ) -> List[T]:
         """Get items from database based on the query."""
         response: FetchResponse = await cls.__db__.fetch(query_statement.as_query())
         records: List[Dict[str, Any]] = response.items
@@ -70,12 +72,12 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         return [cls._deserialize(item) for item in records]
 
     @classmethod
-    async def delete_key(cls, key: str):
+    async def delete_key(cls, key: str) -> None:
         """Delete an item based on the key"""
         await cls.__db__.delete(key)
 
     @classmethod
-    async def put_many(cls, items: List[Self]):
+    async def put_many(cls: Type[T], items: List[T]) -> List[T]:
         """Put multiple instances at once
 
         :param items: List of pydantic objects to put in the database
@@ -103,7 +105,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
     async def _db_put(cls, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return await cls.__db__.put(data)
 
-    async def save(self):
+    async def save(self) -> None:
         """Saves the record to the database. Behaves as upsert, will create
         if not present. Database key will then be set on the object."""
         # exclude = set()
@@ -114,7 +116,7 @@ class AsyncDetaModel(BaseDetaModel, metaclass=AsyncDetaModelMetaClass):
         saved = await self._db_put(self._serialize())
         self.key = saved["key"]
 
-    async def delete(self):
+    async def delete(self) -> None:
         """Delete the open object from the database. The object will still exist in
         python, but will be deleted from the database and the key attribute will be
         set to None."""

@@ -4,31 +4,33 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ${{matrix.platform}}
-
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest]
         version: [3.7, 3.8, 3.9, "3.10", 3.11]
 
-    steps:
-      - uses: actions/checkout@v2
+    runs-on: ${{ matrix.platform }}
 
-      - name: Setup Python
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.version }}
 
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2.0.0
+      - name: Install Poetry
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false  # Disable virtualenv creation
 
-      - name: Poetry install
+      - name: Install dependencies
         run: poetry install
 
-      - name: run tests
+      - name: Run tests
         env:
           INTEGRATION_TEST_KEY: ${{ secrets.INTEGRATION_TEST_KEY }}
         run: poetry run pytest --cov=odetam
 
       - uses: codecov/codecov-action@v2
-
